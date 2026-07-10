@@ -20,7 +20,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+asyncpg://europark:europark@db:5432/europark
-      JWT_SECRET: PLACEHOLDER
+      JWT_SECRET: BlpknWxcgBxIzkVPSkrrFDy-Xn22mvuhnUnB_KJL36fAOHq10sY-9RVoiXfPZP7t
     ports:
       - "8000:8000"
     volumes:

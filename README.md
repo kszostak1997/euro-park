@@ -1,4 +1,4 @@
-# Euro Park — system wniosków parkingowych
+# Euro Park system wniosków parkingowych
 
 PLACEHOLDER TO DO
 

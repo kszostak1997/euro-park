@@ -1,25 +1,18 @@
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import app.models  # noqa: F401
+from app.controllers.applications import router as applications_router
+from app.controllers.auth import router as auth_router
 from app.core.config import settings
-from app.core.database import Base, engine
+from app.core.exceptions import register_exception_handlers
+from app.core.logging import configure_logging
 
-
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield
-
+configure_logging(debug=settings.debug)
 
 app = FastAPI(
     title=settings.app_name,
-    description="System wniosków o miejsce parkingowe — Wspólnota Euro Park.",
+    description="System wniosków o miejsce parkingowe",
     version="0.1.0",
-    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -29,6 +22,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+register_exception_handlers(app)
+
+app.include_router(auth_router)
+app.include_router(applications_router)
 
 
 @app.get("/health", tags=["system"])
