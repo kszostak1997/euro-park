@@ -7,7 +7,9 @@ PASSWORD = "supersecret123"
 
 async def _auth_headers(client: AsyncClient, email: str = APPLICANT_EMAIL) -> dict:
     await client.post("/auth/register", json={"email": email, "password": PASSWORD})
-    login = await client.post("/auth/login", json={"email": email, "password": PASSWORD})
+    login = await client.post(
+        "/auth/login", json={"email": email, "password": PASSWORD}
+    )
     token = login.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
@@ -17,7 +19,11 @@ async def _create_application(
 ) -> dict:
     response = await client.post(
         "/applications",
-        json={"registration_number": registration_number, "floor": 2, "comment": "test"},
+        json={
+            "registration_number": registration_number,
+            "floor": 2,
+            "comment": "test",
+        },
         headers=headers,
     )
     return response.json()
@@ -28,7 +34,11 @@ async def test_create_application_success(client: AsyncClient) -> None:
 
     response = await client.post(
         "/applications",
-        json={"registration_number": "wa 123-45", "floor": 3, "comment": "proszę o miejsce"},
+        json={
+            "registration_number": "wa 123-45",
+            "floor": 3,
+            "comment": "proszę o miejsce",
+        },
         headers=headers,
     )
 
@@ -48,7 +58,9 @@ async def test_create_application_requires_auth(client: AsyncClient) -> None:
     assert response.status_code == 401
 
 
-async def test_create_application_invalid_registration_number(client: AsyncClient) -> None:
+async def test_create_application_invalid_registration_number(
+    client: AsyncClient,
+) -> None:
     headers = await _auth_headers(client)
 
     response = await client.post(

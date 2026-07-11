@@ -47,6 +47,11 @@ class ApplicationNotEditableError(AppError):
     detail = "Application can only be edited while pending or needs changes"
 
 
+class InvalidStatusTransitionError(AppError):
+    status_code = 409
+    detail = "Application is not in a state that allows this transition"
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def app_error_handler(_: Request, exc: AppError) -> JSONResponse:

@@ -21,3 +21,7 @@ class UserRepository:
         await self.db.flush()
         await self.db.refresh(user)
         return user
+
+    async def list_all(self) -> list[User]:
+        result = await self.db.execute(select(User).order_by(User.created_at.desc()))
+        return list(result.scalars().all())

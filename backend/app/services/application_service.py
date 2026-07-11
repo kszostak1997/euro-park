@@ -2,7 +2,11 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ApplicationNotEditableError, ApplicationNotFoundError
+from app.core.exceptions import (
+    ApplicationNotEditableError,
+    ApplicationNotFoundError,
+    InvalidStatusTransitionError,
+)
 from app.models.application import Application, ApplicationStatus
 from app.models.user import User
 from app.repositories.application_repository import ApplicationRepository
@@ -11,6 +15,7 @@ from app.schemas.application import ApplicationCreate, ApplicationUpdate
 logger = logging.getLogger("app.services.application")
 
 EDITABLE_STATUSES = {ApplicationStatus.PENDING, ApplicationStatus.NEEDS_CHANGES}
+REVIEWABLE_STATUSES = {ApplicationStatus.PENDING, ApplicationStatus.NEEDS_CHANGES}
 
 
 class ApplicationService:
@@ -53,4 +58,53 @@ class ApplicationService:
         await self.db.commit()
         await self.db.refresh(application)
         logger.info("Updated application id=%s", application.id)
+        return application
+
+    async def list_all(
+        self,
+        status_filter: ApplicationStatus | None,
+        page: int,
+        size: int,
+        sort_by: str,
+        descending: bool,
+    ) -> tuple[list[Application], int]:
+        offset = (page - 1) * size
+        return await self.applications.list_all(
+            status_filter, offset, size, sort_by, descending
+        )
+
+    async def _get_reviewable(self, application_id: int) -> Application:
+        application = await self.applications.get_by_id(application_id)
+        if application is None:
+            raise ApplicationNotFoundError
+        if application.status not in REVIEWABLE_STATUSES:
+            raise InvalidStatusTransitionError
+        return application
+
+    async def approve(self, application_id: int) -> Application:
+        application = await self._get_reviewable(application_id)
+        application.status = ApplicationStatus.APPROVED
+        self.db.add(application)
+        await self.db.commit()
+        await self.db.refresh(application)
+        logger.info("Approved application id=%s", application.id)
+        return application
+
+    async def reject(self, application_id: int) -> Application:
+        application = await self._get_reviewable(application_id)
+        application.status = ApplicationStatus.REJECTED
+        self.db.add(application)
+        await self.db.commit()
+        await self.db.refresh(application)
+        logger.info("Rejected application id=%s", application.id)
+        return application
+
+    async def request_changes(self, application_id: int, comment: str) -> Application:
+        application = await self._get_reviewable(application_id)
+        application.status = ApplicationStatus.NEEDS_CHANGES
+        application.comment = comment
+        self.db.add(application)
+        await self.db.commit()
+        await self.db.refresh(application)
+        logger.info("Requested changes for application id=%s", application.id)
         return application

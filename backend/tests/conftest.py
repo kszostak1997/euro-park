@@ -7,7 +7,10 @@ from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401 -- registers models on Base.metadata
 from app.core.database import Base, get_db
+from app.core.rate_limit import limiter
 from app.main import app
+
+limiter.enabled = False
 
 test_engine = create_async_engine(
     "sqlite+aiosqlite:///:memory:",
