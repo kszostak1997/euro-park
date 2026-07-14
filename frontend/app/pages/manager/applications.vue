@@ -51,8 +51,6 @@ function isRevocable(status: string): boolean {
   return status === 'APPROVED'
 }
 
-// Applies a mutated row without a full list refetch. If it no longer matches
-// the active status filter, it's dropped from the current page instead.
 function applyMutatedApplication(row: ApplicationRow) {
   if (!applicationsPage.value) return
   const items = applicationsPage.value.items
@@ -183,7 +181,7 @@ async function submitRequestChanges() {
       />
     </div>
 
-    <Modal
+    <AppModal
       v-if="confirmTarget && confirmCopy"
       :title="confirmCopy.title"
       @close="closeConfirm"
@@ -205,9 +203,9 @@ async function submitRequestChanges() {
           Anuluj
         </LoadingButton>
       </div>
-    </Modal>
+    </AppModal>
 
-    <Modal v-if="requestChangesTarget" title="Poproś o poprawki" @close="closeRequestChanges">
+    <AppModal v-if="requestChangesTarget" title="Poproś o poprawki" @close="closeRequestChanges">
       <p class="modal-subtitle">{{ requestChangesTarget.registration_number }}</p>
       <FormInput
         id="requestChangesComment"
@@ -231,7 +229,7 @@ async function submitRequestChanges() {
           Anuluj
         </LoadingButton>
       </div>
-    </Modal>
+    </AppModal>
 
     <div class="app-card table-card">
       <table class="data-table">
@@ -338,7 +336,7 @@ async function submitRequestChanges() {
     </div>
 
     <div class="pagination-slot">
-      <Pagination
+      <AppPagination
         v-model:page="page"
         :size="PAGE_SIZE"
         :total="applicationsPage?.total ?? 0"

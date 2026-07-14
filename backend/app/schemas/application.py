@@ -1,12 +1,10 @@
-from datetime import UTC, datetime
 from typing import Annotated
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from app.models.application import ApplicationStatus
-from app.schemas.validators import RegistrationNumber
+from app.schemas.validators import AwareDatetime, RegistrationNumber
 
-# Matches the floors offered by the frontend's application form (Piętro 0-2).
 MIN_FLOOR = 0
 MAX_FLOOR = 2
 
@@ -38,15 +36,7 @@ class ApplicationRead(BaseModel):
     status: ApplicationStatus
     applicant_comment: str | None
     manager_comment: str | None
-    created_at: datetime
-
-    @field_validator("created_at", mode="after")
-    @classmethod
-    def _ensure_utc(cls, value: datetime) -> datetime:
-        # SQLite (local dev default) stores naive timestamps while Postgres
-        # (docker) returns tz-aware ones; normalize both to UTC so the
-        # frontend always parses an unambiguous instant.
-        return value if value.tzinfo else value.replace(tzinfo=UTC)
+    created_at: AwareDatetime
 
 
 class ApplicationPage(BaseModel):

@@ -20,9 +20,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # "comment" (physical column) now maps to the ORM attribute
-    # "manager_comment"; this migration only adds the new, separate
-    # applicant-facing column so the two authors can't overwrite each other.
     op.add_column(
         "applications",
         sa.Column("applicant_comment", sa.String(length=500), nullable=True),

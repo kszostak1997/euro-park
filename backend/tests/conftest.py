@@ -58,9 +58,30 @@ async def register_and_login(
     return login.json()["access_token"]
 
 
-async def promote_to_manager(db_session: AsyncSession, email: str) -> None:
+async def auth_headers(
+    client: AsyncClient, email: str, password: str = DEFAULT_TEST_PASSWORD
+) -> dict:
+    token = await register_and_login(client, email, password)
+    return {"Authorization": f"Bearer {token}"}
+
+
+async def promote(db_session: AsyncSession, email: str, role: RoleEnum) -> None:
     result = await db_session.execute(select(User).where(User.email == email))
     user = result.scalar_one()
-    user.role = RoleEnum.MANAGER
+    user.role = role
     db_session.add(user)
     await db_session.commit()
+
+
+async def create_application(
+    client: AsyncClient,
+    headers: dict,
+    registration_number: str = "WA12345",
+    floor: int = 1,
+) -> dict:
+    response = await client.post(
+        "/applications",
+        json={"registration_number": registration_number, "floor": floor},
+        headers=headers,
+    )
+    return response.json()

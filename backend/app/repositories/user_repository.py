@@ -23,7 +23,9 @@ class UserRepository:
         return user
 
     async def list_all(self, offset: int, limit: int) -> tuple[list[User], int]:
-        total = (await self.db.execute(select(func.count()).select_from(User))).scalar_one()
+        total = (
+            await self.db.execute(select(func.count()).select_from(User))
+        ).scalar_one()
 
         result = await self.db.execute(
             select(User).order_by(User.created_at.desc()).offset(offset).limit(limit)

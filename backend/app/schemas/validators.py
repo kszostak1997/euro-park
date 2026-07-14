@@ -1,4 +1,5 @@
 import re
+from datetime import UTC, datetime
 from typing import Annotated
 
 from pydantic import AfterValidator, Field
@@ -18,3 +19,10 @@ RegistrationNumber = Annotated[
     Field(min_length=4, max_length=20),
     AfterValidator(normalize_registration_number),
 ]
+
+
+def _ensure_utc(value: datetime) -> datetime:
+    return value if value.tzinfo else value.replace(tzinfo=UTC)
+
+
+AwareDatetime = Annotated[datetime, AfterValidator(_ensure_utc)]

@@ -1,8 +1,10 @@
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.conftest import promote_to_manager as _promote_to_manager
-from tests.conftest import register_and_login as _register_and_login
+from app.models.user import RoleEnum
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import create_application as _create_application
+from tests.conftest import promote as _promote
 
 RESIDENT_EMAIL = "resident@example.com"
 MANAGER_EMAIL = "manager@example.com"
@@ -21,12 +23,8 @@ async def test_barrier_denies_unknown_plate(client: AsyncClient) -> None:
 
 
 async def test_barrier_denies_pending_application(client: AsyncClient) -> None:
-    resident_token = await _register_and_login(client, RESIDENT_EMAIL)
-    await client.post(
-        "/applications",
-        json={"registration_number": "WA12345", "floor": 1},
-        headers={"Authorization": f"Bearer {resident_token}"},
-    )
+    resident_headers = await _auth_headers(client, RESIDENT_EMAIL)
+    await _create_application(client, resident_headers, "WA12345")
 
     response = await client.post(
         "/barrier/check-access", json={"registration_number": "WA12345"}
@@ -38,19 +36,13 @@ async def test_barrier_denies_pending_application(client: AsyncClient) -> None:
 async def test_barrier_grants_approved_application(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    resident_token = await _register_and_login(client, RESIDENT_EMAIL)
-    created = await client.post(
-        "/applications",
-        json={"registration_number": "WA12345", "floor": 1},
-        headers={"Authorization": f"Bearer {resident_token}"},
-    )
-    application_id = created.json()["id"]
+    resident_headers = await _auth_headers(client, RESIDENT_EMAIL)
+    created = await _create_application(client, resident_headers, "WA12345")
 
-    manager_token = await _register_and_login(client, MANAGER_EMAIL)
-    await _promote_to_manager(db_session, MANAGER_EMAIL)
+    manager_headers = await _auth_headers(client, MANAGER_EMAIL)
+    await _promote(db_session, MANAGER_EMAIL, RoleEnum.MANAGER)
     await client.post(
-        f"/manager/applications/{application_id}/approve",
-        headers={"Authorization": f"Bearer {manager_token}"},
+        f"/manager/applications/{created['id']}/approve", headers=manager_headers
     )
 
     response = await client.post(

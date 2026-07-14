@@ -1,16 +1,11 @@
-from typing import Annotated
+from fastapi import APIRouter, Request
 
-from fastapi import APIRouter, Depends, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.database import get_db
+from app.core.dependencies import DbSession
 from app.core.rate_limit import limiter
 from app.schemas.barrier import BarrierCheckRequest, BarrierCheckResponse
 from app.services.barrier_service import BarrierService
 
 router = APIRouter(prefix="/barrier", tags=["barrier"])
-
-DbSession = Annotated[AsyncSession, Depends(get_db)]
 
 
 @router.post(

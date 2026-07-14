@@ -1,32 +1,14 @@
 from httpx import AsyncClient
 
+from tests.conftest import auth_headers as _auth_headers_default
+from tests.conftest import create_application as _create_application
+
 APPLICANT_EMAIL = "resident@example.com"
 OTHER_EMAIL = "neighbor@example.com"
-PASSWORD = "supersecret123"
 
 
 async def _auth_headers(client: AsyncClient, email: str = APPLICANT_EMAIL) -> dict:
-    await client.post("/auth/register", json={"email": email, "password": PASSWORD})
-    login = await client.post(
-        "/auth/login", json={"email": email, "password": PASSWORD}
-    )
-    token = login.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
-
-
-async def _create_application(
-    client: AsyncClient, headers: dict, registration_number: str = "WA12345"
-) -> dict:
-    response = await client.post(
-        "/applications",
-        json={
-            "registration_number": registration_number,
-            "floor": 2,
-            "applicant_comment": "test",
-        },
-        headers=headers,
-    )
-    return response.json()
+    return await _auth_headers_default(client, email)
 
 
 async def test_create_application_success(client: AsyncClient) -> None:

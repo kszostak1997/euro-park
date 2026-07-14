@@ -17,6 +17,17 @@ const DEFAULT_MESSAGES: Record<number, string> = {
   500: 'Błąd serwera',
 }
 
+function formatValidationDetail(detail: unknown): string | undefined {
+  if (!Array.isArray(detail)) return undefined
+  const messages = detail
+    .map((item) => {
+      const msg = (item as { msg?: unknown } | null)?.msg
+      return typeof msg === 'string' ? msg : undefined
+    })
+    .filter((msg): msg is string => !!msg)
+  return messages.length ? messages.join(', ') : undefined
+}
+
 export function useToast() {
   const toasts = useState<ToastItem[]>('toast-items', () => [])
 
@@ -39,14 +50,16 @@ export function useToast() {
     fallbackStatus = 500,
     fallbackMessage?: string,
   ): string {
-    const fetchError = err as { data?: { detail?: string }; status?: number }
+    const fetchError = err as { data?: { detail?: unknown }; status?: number }
     const status = fetchError.status ?? fallbackStatus
-    const message = fetchError.data?.detail ?? fallbackMessage
+    const detail = fetchError.data?.detail
+    const message =
+      (typeof detail === 'string' ? detail : formatValidationDetail(detail)) ?? fallbackMessage
     return message ?? DEFAULT_MESSAGES[status] ?? 'Nieznany błąd'
   }
 
   function reportApiError(err: unknown, fallbackStatus = 500, fallbackMessage?: string): string {
-    const fetchError = err as { data?: { detail?: string }; status?: number }
+    const fetchError = err as { status?: number }
     const status = fetchError.status ?? fallbackStatus
     const message = extractApiErrorMessage(err, fallbackStatus, fallbackMessage)
     showToast(status, message)

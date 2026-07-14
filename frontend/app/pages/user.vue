@@ -106,7 +106,7 @@ function submitForm() {
         </LoadingButton>
       </div>
 
-      <Modal
+      <AppModal
         v-if="showForm"
         :title="formMode === 'create' ? 'Nowy wniosek' : 'Popraw wniosek'"
         @close="closeForm"
@@ -143,7 +143,7 @@ function submitForm() {
             Anuluj
           </LoadingButton>
         </div>
-      </Modal>
+      </AppModal>
 
       <template v-if="pending">
         <div v-for="n in 3" :key="n" class="app-card">

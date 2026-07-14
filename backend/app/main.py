@@ -10,8 +10,8 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.controllers.applications import router as applications_router
 from app.controllers.auth import router as auth_router
 from app.controllers.barrier import router as barrier_router
-from app.controllers.manager import router as manager_router
-from app.controllers.manager import users_router as manager_users_router
+from app.controllers.manager_applications import router as manager_applications_router
+from app.controllers.manager_users import router as manager_users_router
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.core.exceptions import register_exception_handlers
@@ -78,7 +78,7 @@ register_exception_handlers(app)
 
 app.include_router(auth_router)
 app.include_router(applications_router)
-app.include_router(manager_router)
+app.include_router(manager_applications_router)
 app.include_router(manager_users_router)
 app.include_router(barrier_router)
 

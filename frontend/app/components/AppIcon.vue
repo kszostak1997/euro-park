@@ -22,8 +22,8 @@ withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 16 })
     stroke-width="1.8"
     stroke-linecap="round"
     stroke-linejoin="round"
-    :width="size"
-    :height="size"
+    :width.attr="size"
+    :height.attr="size"
   >
     <template v-if="name === 'check'">
       <polyline points="20 6 9 17 4 12" />

@@ -25,9 +25,6 @@ class ApplicationService:
         self.applications = ApplicationRepository(db)
 
     async def _reload(self, application: Application) -> Application:
-        # Plain refresh() only guarantees column attributes; explicitly
-        # reload the "user" relationship too so ApplicationRead.user_email
-        # can always be serialized without a lazy-load error.
         await self.db.refresh(application)
         await self.db.refresh(application, attribute_names=["user"])
         return application
@@ -36,8 +33,6 @@ class ApplicationService:
         application = await self.applications.create(
             user.id, data.registration_number, data.floor, data.applicant_comment
         )
-        # Attach the already-loaded User instead of a separate lazy-load, so
-        # ApplicationRead.user_email can be serialized without another query.
         application.user = user
         await self.db.commit()
         logger.info("Created application id=%s for user id=%s", application.id, user.id)
@@ -76,8 +71,6 @@ class ApplicationService:
             application.applicant_comment = data.applicant_comment
             changed = True
 
-        # Only clear NEEDS_CHANGES if the resident actually changed something —
-        # an empty/no-op PATCH shouldn't silently resubmit for re-review.
         if changed and application.status == ApplicationStatus.NEEDS_CHANGES:
             application.status = ApplicationStatus.PENDING
 

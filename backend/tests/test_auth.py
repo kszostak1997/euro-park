@@ -57,7 +57,7 @@ async def test_login_nonexistent_user(client: AsyncClient) -> None:
 
 
 async def test_protected_route_requires_token(client: AsyncClient) -> None:
-    response = await client.get("/auth/me")
+    response = await client.get("/auth/current-user")
 
     assert response.status_code == 401
 
@@ -68,7 +68,7 @@ async def test_protected_route_with_valid_token(client: AsyncClient) -> None:
     access_token = login_response.json()["access_token"]
 
     response = await client.get(
-        "/auth/me", headers={"Authorization": f"Bearer {access_token}"}
+        "/auth/current-user", headers={"Authorization": f"Bearer {access_token}"}
     )
 
     assert response.status_code == 200

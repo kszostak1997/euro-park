@@ -32,9 +32,6 @@ class Application(Base):
         default=ApplicationStatus.PENDING,
         index=True,
     )
-    # Physical column stays named "comment" (pre-existing, holds the manager's
-    # review feedback); "applicant_comment" is a separate new column so the two
-    # authors can no longer overwrite each other's text.
     manager_comment: Mapped[str | None] = mapped_column(
         "comment", String(500), default=None
     )

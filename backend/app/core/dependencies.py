@@ -45,3 +45,9 @@ def require_role(*roles: RoleEnum):
         return user
 
     return dependency
+
+
+DbSession = Annotated[AsyncSession, Depends(get_db)]
+CurrentUser = Annotated[User, Depends(get_current_user)]
+ManagerUser = Annotated[User, Depends(require_role(RoleEnum.MANAGER, RoleEnum.ADMIN))]
+AdminUser = Annotated[User, Depends(require_role(RoleEnum.ADMIN))]

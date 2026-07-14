@@ -38,7 +38,7 @@ const inputType = computed(() => {
         :maxlength="maxlength"
         :aria-invalid="!!error"
         :aria-describedby="error ? `${id}-error` : undefined"
-      />
+      >
       <button
         v-if="isPasswordField"
         type="button"

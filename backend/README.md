@@ -1,4 +1,4 @@
-# Euro Park — backend
+# Euro Park: backend
 
 FastAPI REST API for the parking-application management system.
 
@@ -44,7 +44,7 @@ API available at http://localhost:8000, interactive docs at http://localhost:800
 
 ## Running with Docker
 
-See the [root README](../README.md) — `docker compose up --build` builds this service against PostgreSQL and applies migrations automatically on container start (see `Dockerfile`'s `CMD`).
+See the [root README](../README.md). `docker compose up --build` builds this service against PostgreSQL and applies migrations automatically on container start (see `Dockerfile`'s `CMD`).
 
 ## Environment variables
 
@@ -71,7 +71,7 @@ On every startup, `app/core/seed.py` idempotently ensures three accounts exist (
 pytest
 ```
 
-~44 tests covering auth, applications (CRUD + ownership + status transitions), barrier access checks, manager review workflow, admin user management, rate limiting, and seeding.
+52 tests covering auth, applications (CRUD + ownership + status transitions), barrier access checks, manager review workflow, admin user management, rate limiting, and seeding.
 
 ## Lint / format
 
@@ -84,15 +84,15 @@ black --check .
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/auth/register` | — | Create a `USER` account |
-| POST | `/auth/login` | — | Get access + refresh token pair |
-| POST | `/auth/refresh` | — | Rotate a refresh token for a new pair |
-| GET | `/auth/me` | Bearer | Current user profile |
+| POST | `/auth/register` | none | Create a `USER` account |
+| POST | `/auth/login` | none | Get access + refresh token pair |
+| POST | `/auth/refresh` | none | Rotate a refresh token for a new pair |
+| GET | `/auth/current-user` | Bearer | Current user profile |
 | POST | `/applications` | Bearer | Submit a parking application |
 | GET | `/applications` | Bearer | List own applications |
 | GET | `/applications/{id}` | Bearer | Get own application |
 | PATCH | `/applications/{id}` | Bearer | Edit own application (only while `PENDING`/`NEEDS_CHANGES`) |
-| POST | `/barrier/check-access` | — | Barrier hardware: check whether a plate has an `APPROVED` application |
+| POST | `/barrier/check-access` | none | Barrier hardware: check whether a plate has an `APPROVED` application |
 | GET | `/manager/applications` | Manager/Admin | List all applications (paginated, filterable by status, sortable) |
 | POST | `/manager/applications/{id}/approve` | Manager/Admin | Approve |
 | POST | `/manager/applications/{id}/reject` | Manager/Admin | Reject |

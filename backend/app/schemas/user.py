@@ -1,8 +1,7 @@
-from datetime import UTC, datetime
-
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models.user import RoleEnum
+from app.schemas.validators import AwareDatetime
 
 
 class UserCreate(BaseModel):
@@ -25,12 +24,7 @@ class UserRead(BaseModel):
     email: EmailStr
     role: RoleEnum
     is_active: bool
-    created_at: datetime
-
-    @field_validator("created_at", mode="after")
-    @classmethod
-    def _ensure_utc(cls, value: datetime) -> datetime:
-        return value if value.tzinfo else value.replace(tzinfo=UTC)
+    created_at: AwareDatetime
 
 
 class UserPage(BaseModel):

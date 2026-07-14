@@ -1,10 +1,4 @@
-export interface AuthUser {
-  id: number
-  email: string
-  role: 'USER' | 'MANAGER' | 'ADMIN'
-  is_active: boolean
-  created_at: string
-}
+import type { AuthUser } from '~/types/user'
 
 interface TokenPair {
   access_token: string
@@ -13,7 +7,7 @@ interface TokenPair {
 }
 
 export function roleLandingPath(role: string): string {
-  return role === 'USER' ? '/user' : '/manager'
+  return role === 'USER' ? '/user' : '/manager/applications'
 }
 
 export function useAuth() {
@@ -36,7 +30,7 @@ export function useAuth() {
       return null
     }
     try {
-      user.value = await api<AuthUser>('/auth/me')
+      user.value = await api<AuthUser>('/auth/current-user')
       return user.value
     } catch {
       user.value = null
@@ -61,9 +55,15 @@ export function useAuth() {
   }
 
   function logout() {
-    // clearTokens() also resets the shared 'auth-user' state.
     clearTokens()
   }
 
-  return { user, isLoggedIn, register, login, logout, fetchCurrentUser }
+  async function ensureCurrentUser(): Promise<AuthUser | null> {
+    if (!user.value) {
+      await fetchCurrentUser()
+    }
+    return user.value
+  }
+
+  return { user, isLoggedIn, register, login, logout, fetchCurrentUser, ensureCurrentUser }
 }

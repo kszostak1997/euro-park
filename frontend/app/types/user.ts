@@ -1,4 +1,10 @@
-import type { AuthUser } from '~/composables/useAuth'
+export interface AuthUser {
+  id: number
+  email: string
+  role: 'USER' | 'MANAGER' | 'ADMIN'
+  is_active: boolean
+  created_at: string
+}
 
 export interface UserPage {
   items: AuthUser[]
