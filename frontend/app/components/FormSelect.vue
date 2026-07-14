@@ -113,6 +113,7 @@ onUnmounted(() => {
         :disabled="disabled"
         :aria-expanded="isOpen"
         :aria-required="required"
+        :aria-activedescendant="isOpen && activeIndex >= 0 ? `${id}-option-${activeIndex}` : undefined"
         aria-haspopup="listbox"
         @click="toggle"
         @keydown="onTriggerKeydown"
@@ -130,6 +131,7 @@ onUnmounted(() => {
         >
           <li
             v-for="(option, index) in options"
+            :id="`${id}-option-${index}`"
             :key="option.value"
             role="option"
             class="select-option"

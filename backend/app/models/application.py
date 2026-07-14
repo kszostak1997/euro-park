@@ -32,9 +32,19 @@ class Application(Base):
         default=ApplicationStatus.PENDING,
         index=True,
     )
-    comment: Mapped[str | None] = mapped_column(String(500), default=None)
+    # Physical column stays named "comment" (pre-existing, holds the manager's
+    # review feedback); "applicant_comment" is a separate new column so the two
+    # authors can no longer overwrite each other's text.
+    manager_comment: Mapped[str | None] = mapped_column(
+        "comment", String(500), default=None
+    )
+    applicant_comment: Mapped[str | None] = mapped_column(String(500), default=None)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
 
     user: Mapped["User"] = relationship(back_populates="applications")
+
+    @property
+    def user_email(self) -> str:
+        return self.user.email

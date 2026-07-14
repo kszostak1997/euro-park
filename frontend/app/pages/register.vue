@@ -1,7 +1,6 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'guest', layout: 'auth' })
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PASSWORD_MIN = 4
 const PASSWORD_MAX = 128
 
@@ -16,12 +15,10 @@ const passwordError = ref('')
 const passwordConfirmError = ref('')
 
 const { register, login } = useAuth()
-const { showToast, reportApiError } = useToast()
+const { showToast, extractApiErrorMessage } = useToast()
 
 function validate(): boolean {
-  emailError.value = EMAIL_PATTERN.test(email.value)
-    ? ''
-    : 'Adres email jest nieprawidłowy'
+  emailError.value = isValidEmail(email.value) ? '' : 'Adres email jest nieprawidłowy'
 
   passwordError.value =
     password.value.length >= PASSWORD_MIN && password.value.length <= PASSWORD_MAX
@@ -47,7 +44,7 @@ async function handleSubmit() {
     showToast(200, 'Konto zostało utworzone')
     await navigateTo(roleLandingPath(user.role))
   } catch (err: unknown) {
-    error.value = reportApiError(err, 400, 'Nie udało się zarejestrować')
+    error.value = extractApiErrorMessage(err, 400, 'Nie udało się zarejestrować')
   } finally {
     loading.value = false
   }

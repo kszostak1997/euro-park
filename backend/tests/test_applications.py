@@ -22,7 +22,7 @@ async def _create_application(
         json={
             "registration_number": registration_number,
             "floor": 2,
-            "comment": "test",
+            "applicant_comment": "test",
         },
         headers=headers,
     )
@@ -36,8 +36,8 @@ async def test_create_application_success(client: AsyncClient) -> None:
         "/applications",
         json={
             "registration_number": "wa 123-45",
-            "floor": 3,
-            "comment": "proszę o miejsce",
+            "floor": 1,
+            "applicant_comment": "proszę o miejsce",
         },
         headers=headers,
     )
@@ -45,9 +45,25 @@ async def test_create_application_success(client: AsyncClient) -> None:
     assert response.status_code == 201
     body = response.json()
     assert body["registration_number"] == "WA12345"
-    assert body["floor"] == 3
+    assert body["floor"] == 1
     assert body["status"] == "PENDING"
-    assert body["comment"] == "proszę o miejsce"
+    assert body["applicant_comment"] == "proszę o miejsce"
+    assert body["manager_comment"] is None
+    assert body["user_email"] == APPLICANT_EMAIL
+
+
+async def test_create_application_rejects_floor_out_of_range(
+    client: AsyncClient,
+) -> None:
+    headers = await _auth_headers(client)
+
+    response = await client.post(
+        "/applications",
+        json={"registration_number": "WA12345", "floor": 99},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
 
 
 async def test_create_application_requires_auth(client: AsyncClient) -> None:
@@ -103,12 +119,12 @@ async def test_update_application_while_pending_succeeds(client: AsyncClient) ->
 
     response = await client.patch(
         f"/applications/{created['id']}",
-        json={"floor": 5},
+        json={"floor": 0},
         headers=headers,
     )
 
     assert response.status_code == 200
-    assert response.json()["floor"] == 5
+    assert response.json()["floor"] == 0
 
 
 async def test_update_application_forbidden_when_approved(
@@ -126,7 +142,7 @@ async def test_update_application_forbidden_when_approved(
 
     response = await client.patch(
         f"/applications/{created['id']}",
-        json={"floor": 5},
+        json={"floor": 0},
         headers=headers,
     )
 
@@ -140,8 +156,61 @@ async def test_update_application_not_owned_returns_404(client: AsyncClient) -> 
     headers_b = await _auth_headers(client, OTHER_EMAIL)
     response = await client.patch(
         f"/applications/{created['id']}",
-        json={"floor": 5},
+        json={"floor": 0},
         headers=headers_b,
     )
 
     assert response.status_code == 404
+
+
+async def test_update_application_empty_patch_does_not_change_status(
+    client: AsyncClient, db_session
+) -> None:
+    from app.models.application import Application, ApplicationStatus
+
+    headers = await _auth_headers(client)
+    created = await _create_application(client, headers)
+
+    application = await db_session.get(Application, created["id"])
+    application.status = ApplicationStatus.NEEDS_CHANGES
+    application.manager_comment = "Popraw numer rejestracyjny"
+    db_session.add(application)
+    await db_session.commit()
+
+    response = await client.patch(
+        f"/applications/{created['id']}",
+        json={},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "NEEDS_CHANGES"
+    assert body["manager_comment"] == "Popraw numer rejestracyjny"
+
+
+async def test_update_application_does_not_overwrite_manager_comment(
+    client: AsyncClient, db_session
+) -> None:
+    from app.models.application import Application, ApplicationStatus
+
+    headers = await _auth_headers(client)
+    created = await _create_application(client, headers)
+
+    application = await db_session.get(Application, created["id"])
+    application.status = ApplicationStatus.NEEDS_CHANGES
+    application.manager_comment = "Popraw numer rejestracyjny"
+    db_session.add(application)
+    await db_session.commit()
+
+    response = await client.patch(
+        f"/applications/{created['id']}",
+        json={"registration_number": "WA99999", "applicant_comment": "poprawiłem"},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "PENDING"
+    assert body["applicant_comment"] == "poprawiłem"
+    assert body["manager_comment"] == "Popraw numer rejestracyjny"

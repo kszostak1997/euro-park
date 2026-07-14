@@ -2,13 +2,40 @@
 defineProps<{ title: string }>()
 const emit = defineEmits<{ close: [] }>()
 
+const panelEl = ref<HTMLElement | null>(null)
+
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+function getFocusable(): HTMLElement[] {
+  if (!panelEl.value) return []
+  return Array.from(panelEl.value.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+}
+
 function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') emit('close')
+  if (event.key === 'Escape') {
+    emit('close')
+    return
+  }
+  if (event.key !== 'Tab') return
+
+  const focusable = getFocusable()
+  if (focusable.length === 0) return
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last?.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first?.focus()
+  }
 }
 
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
   document.body.style.overflow = 'hidden'
+  ;(getFocusable()[0] ?? panelEl.value)?.focus()
 })
 
 onUnmounted(() => {
@@ -20,7 +47,14 @@ onUnmounted(() => {
 <template>
   <Teleport to="body">
     <div class="modal-overlay" @click.self="emit('close')">
-      <div class="modal-panel" role="dialog" aria-modal="true" :aria-label="title">
+      <div
+        ref="panelEl"
+        class="modal-panel"
+        role="dialog"
+        aria-modal="true"
+        tabindex="-1"
+        :aria-label="title"
+      >
         <div class="modal-header">
           <h3>{{ title }}</h3>
           <button

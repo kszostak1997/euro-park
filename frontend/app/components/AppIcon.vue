@@ -9,6 +9,7 @@ export type IconName =
   | 'eye-off'
   | 'document'
   | 'chevron-down'
+  | 'undo'
 
 withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 16 })
 </script>
@@ -65,6 +66,10 @@ withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 16 })
     </template>
     <template v-else-if="name === 'chevron-down'">
       <polyline points="6 9 12 15 18 9" />
+    </template>
+    <template v-else-if="name === 'undo'">
+      <polyline points="1 4 1 10 7 10" />
+      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
     </template>
   </svg>
 </template>

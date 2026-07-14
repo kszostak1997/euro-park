@@ -6,7 +6,7 @@ definePageMeta({ middleware: 'auth' })
 
 const { listOwn, create, update } = useApplications()
 
-const { data: applications, pending, refresh } = useAsyncData<ApplicationRow[]>(
+const { data: applications, pending } = useAsyncData<ApplicationRow[]>(
   'my-applications',
   () => listOwn(),
   { default: () => [] },
@@ -36,16 +36,20 @@ const FLOOR_OPTIONS: SelectOption<number>[] = [
 const showForm = ref(false)
 const formMode = ref<'create' | 'edit'>('create')
 const editingId = ref<number | null>(null)
+const editingManagerComment = ref<string | null>(null)
 const formRegistrationNumber = ref('')
+const formRegistrationNumberError = ref('')
 const formFloor = ref(0)
 const formComment = ref('')
 
 function openForm(application?: ApplicationRow) {
   formMode.value = application ? 'edit' : 'create'
   editingId.value = application?.id ?? null
+  editingManagerComment.value = application?.manager_comment ?? null
   formRegistrationNumber.value = application?.registration_number ?? ''
+  formRegistrationNumberError.value = ''
   formFloor.value = application?.floor ?? 0
-  formComment.value = ''
+  formComment.value = application?.applicant_comment ?? ''
   showForm.value = true
 }
 
@@ -53,16 +57,32 @@ function closeForm() {
   showForm.value = false
 }
 
-const { loading: formLoading, submit: submitFormAction } = useModalForm(async () => {
+function upsertApplication(row: ApplicationRow) {
+  const list = applications.value ?? []
+  const idx = list.findIndex((a) => a.id === row.id)
+  applications.value =
+    idx === -1 ? [row, ...list] : [...list.slice(0, idx), row, ...list.slice(idx + 1)]
+}
+
+const { loading: formLoading, submit: submitFormAction } = useModalForm<ApplicationRow>((row) => {
   closeForm()
-  await refresh()
+  upsertApplication(row)
 })
 
+function validateForm(): boolean {
+  formRegistrationNumberError.value = isValidRegistrationNumber(formRegistrationNumber.value)
+    ? ''
+    : 'Nieprawidłowy numer rejestracyjny (np. WA12345)'
+  return !formRegistrationNumberError.value
+}
+
 function submitForm() {
+  if (!validateForm()) return
+
   const data = {
     registration_number: formRegistrationNumber.value,
     floor: formFloor.value,
-    comment: formComment.value || null,
+    applicant_comment: formComment.value || null,
   }
   return formMode.value === 'create'
     ? submitFormAction(() => create(data), 201)
@@ -91,11 +111,17 @@ function submitForm() {
         :title="formMode === 'create' ? 'Nowy wniosek' : 'Popraw wniosek'"
         @close="closeForm"
       >
+        <div v-if="editingManagerComment" class="review-comment">
+          <p class="review-comment-title">Komentarz zarządcy</p>
+          <p class="review-comment-text">{{ editingManagerComment }}</p>
+        </div>
+
         <FormInput
           id="formRegistrationNumber"
           v-model="formRegistrationNumber"
           label="Nr rejestracyjny"
           placeholder="np. WA12345"
+          :error="formRegistrationNumberError"
         />
         <FormSelect
           id="formFloor"
@@ -138,7 +164,7 @@ function submitForm() {
         <p class="empty-title">Brak wniosków</p>
         <p class="empty-text">
           Nie złożyłeś jeszcze wniosku o miejsce parkingowe. Podaj numer rejestracyjny i
-          preferowane piętro — zarządca rozpatrzy wniosek.
+          preferowane piętro.
         </p>
         <LoadingButton @click="openForm()">Złóż pierwszy wniosek</LoadingButton>
       </div>
@@ -155,9 +181,9 @@ function submitForm() {
             <StatusBadge :status="a.status" />
           </div>
 
-          <div v-if="a.status === 'NEEDS_CHANGES' && a.comment" class="review-comment">
+          <div v-if="a.status === 'NEEDS_CHANGES' && a.manager_comment" class="review-comment">
             <p class="review-comment-title">Komentarz zarządcy</p>
-            <p class="review-comment-text">{{ a.comment }}</p>
+            <p class="review-comment-text">{{ a.manager_comment }}</p>
           </div>
 
           <LoadingButton

@@ -61,8 +61,8 @@ export function useAuth() {
   }
 
   function logout() {
+    // clearTokens() also resets the shared 'auth-user' state.
     clearTokens()
-    user.value = null
   }
 
   return { user, isLoggedIn, register, login, logout, fetchCurrentUser }

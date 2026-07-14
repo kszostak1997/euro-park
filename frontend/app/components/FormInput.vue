@@ -36,6 +36,8 @@ const inputType = computed(() => {
         :autocomplete="autocomplete"
         :minlength="minlength"
         :maxlength="maxlength"
+        :aria-invalid="!!error"
+        :aria-describedby="error ? `${id}-error` : undefined"
       />
       <button
         v-if="isPasswordField"
@@ -48,7 +50,7 @@ const inputType = computed(() => {
         <AppIcon :name="showPassword ? 'eye-off' : 'eye'" :size="18" />
       </button>
     </div>
-    <p v-if="error" class="field-error">{{ error }}</p>
+    <p v-if="error" :id="`${id}-error`" class="field-error" role="alert">{{ error }}</p>
   </div>
 </template>
 

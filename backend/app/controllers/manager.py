@@ -120,3 +120,14 @@ async def request_changes(
     application_id: int, data: ManagerReviewComment, db: DbSession, _: ManagerUser
 ) -> Application:
     return await ApplicationService(db).request_changes(application_id, data.comment)
+
+
+@router.post(
+    "/{application_id}/revoke",
+    response_model=ApplicationRead,
+    summary="Revoke an approved application, reverting it back to pending review",
+)
+async def revoke_application(
+    application_id: int, db: DbSession, _: ManagerUser
+) -> Application:
+    return await ApplicationService(db).revoke(application_id)

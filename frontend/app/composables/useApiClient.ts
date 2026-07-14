@@ -1,3 +1,5 @@
+import type { AuthUser } from './useAuth'
+
 export function useApiClient() {
   const config = useRuntimeConfig()
   const baseURL = import.meta.server ? config.apiBase : config.public.apiBase
@@ -14,6 +16,11 @@ export function useApiClient() {
   function clearTokens() {
     accessToken.value = null
     refreshToken.value = null
+    // Keyed the same as useAuth()'s `user` state — clear it here too so a
+    // failed background refresh can't leave the UI showing a logged-in user
+    // whose tokens have actually been wiped.
+    const user = useState<AuthUser | null>('auth-user', () => null)
+    user.value = null
   }
 
   async function refreshTokens(): Promise<boolean> {

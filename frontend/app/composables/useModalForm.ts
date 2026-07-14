@@ -1,13 +1,13 @@
-export function useModalForm(onSuccess: () => void | Promise<void>) {
+export function useModalForm<T>(onSuccess: (result: T) => void | Promise<void>) {
   const loading = ref(false)
   const { showToast, reportApiError } = useToast()
 
-  async function submit(action: () => Promise<unknown>, successStatus = 200) {
+  async function submit(action: () => Promise<T>, successStatus = 200) {
     loading.value = true
     try {
-      await action()
+      const result = await action()
       showToast(successStatus)
-      await onSuccess()
+      await onSuccess(result)
     } catch (err: unknown) {
       reportApiError(err)
     } finally {

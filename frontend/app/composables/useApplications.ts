@@ -11,10 +11,6 @@ export function useApplications() {
     return api<ApplicationRow>('/applications', { method: 'POST', body: data })
   }
 
-  function getOwn(id: number): Promise<ApplicationRow> {
-    return api<ApplicationRow>(`/applications/${id}`)
-  }
-
   function update(id: number, data: Partial<ApplicationInput>): Promise<ApplicationRow> {
     return api<ApplicationRow>(`/applications/${id}`, { method: 'PATCH', body: data })
   }
@@ -42,5 +38,18 @@ export function useApplications() {
     })
   }
 
-  return { listOwn, create, getOwn, update, listAll, approve, reject, requestChanges }
+  function revoke(id: number): Promise<ApplicationRow> {
+    return api<ApplicationRow>(`/manager/applications/${id}/revoke`, { method: 'POST' })
+  }
+
+  return {
+    listOwn,
+    create,
+    update,
+    listAll,
+    approve,
+    reject,
+    requestChanges,
+    revoke,
+  }
 }

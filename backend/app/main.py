@@ -18,6 +18,7 @@ from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.rate_limit import limiter
 from app.core.seed import seed_admin_user
+from app.middleware.logging import RequestLoggingMiddleware
 
 configure_logging(debug=settings.debug)
 
@@ -71,6 +72,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RequestLoggingMiddleware)
 
 register_exception_handlers(app)
 

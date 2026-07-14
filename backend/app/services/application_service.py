@@ -16,6 +16,7 @@ logger = logging.getLogger("app.services.application")
 
 EDITABLE_STATUSES = {ApplicationStatus.PENDING, ApplicationStatus.NEEDS_CHANGES}
 REVIEWABLE_STATUSES = {ApplicationStatus.PENDING, ApplicationStatus.NEEDS_CHANGES}
+REVOCABLE_STATUSES = {ApplicationStatus.APPROVED}
 
 
 class ApplicationService:
@@ -23,10 +24,21 @@ class ApplicationService:
         self.db = db
         self.applications = ApplicationRepository(db)
 
+    async def _reload(self, application: Application) -> Application:
+        # Plain refresh() only guarantees column attributes; explicitly
+        # reload the "user" relationship too so ApplicationRead.user_email
+        # can always be serialized without a lazy-load error.
+        await self.db.refresh(application)
+        await self.db.refresh(application, attribute_names=["user"])
+        return application
+
     async def create(self, user: User, data: ApplicationCreate) -> Application:
         application = await self.applications.create(
-            user.id, data.registration_number, data.floor, data.comment
+            user.id, data.registration_number, data.floor, data.applicant_comment
         )
+        # Attach the already-loaded User instead of a separate lazy-load, so
+        # ApplicationRead.user_email can be serialized without another query.
+        application.user = user
         await self.db.commit()
         logger.info("Created application id=%s for user id=%s", application.id, user.id)
         return application
@@ -47,18 +59,31 @@ class ApplicationService:
         if application.status not in EDITABLE_STATUSES:
             raise ApplicationNotEditableError
 
-        if data.registration_number is not None:
+        changed = False
+        if (
+            data.registration_number is not None
+            and data.registration_number != application.registration_number
+        ):
             application.registration_number = data.registration_number
-        if data.floor is not None:
+            changed = True
+        if data.floor is not None and data.floor != application.floor:
             application.floor = data.floor
-        if data.comment is not None:
-            application.comment = data.comment
-        if application.status == ApplicationStatus.NEEDS_CHANGES:
+            changed = True
+        if (
+            data.applicant_comment is not None
+            and data.applicant_comment != application.applicant_comment
+        ):
+            application.applicant_comment = data.applicant_comment
+            changed = True
+
+        # Only clear NEEDS_CHANGES if the resident actually changed something —
+        # an empty/no-op PATCH shouldn't silently resubmit for re-review.
+        if changed and application.status == ApplicationStatus.NEEDS_CHANGES:
             application.status = ApplicationStatus.PENDING
 
         self.db.add(application)
         await self.db.commit()
-        await self.db.refresh(application)
+        await self._reload(application)
         logger.info("Updated application id=%s", application.id)
         return application
 
@@ -88,7 +113,7 @@ class ApplicationService:
         application.status = ApplicationStatus.APPROVED
         self.db.add(application)
         await self.db.commit()
-        await self.db.refresh(application)
+        await self._reload(application)
         logger.info("Approved application id=%s", application.id)
         return application
 
@@ -97,16 +122,29 @@ class ApplicationService:
         application.status = ApplicationStatus.REJECTED
         self.db.add(application)
         await self.db.commit()
-        await self.db.refresh(application)
+        await self._reload(application)
         logger.info("Rejected application id=%s", application.id)
         return application
 
     async def request_changes(self, application_id: int, comment: str) -> Application:
         application = await self._get_reviewable(application_id)
         application.status = ApplicationStatus.NEEDS_CHANGES
-        application.comment = comment
+        application.manager_comment = comment
         self.db.add(application)
         await self.db.commit()
-        await self.db.refresh(application)
+        await self._reload(application)
         logger.info("Requested changes for application id=%s", application.id)
+        return application
+
+    async def revoke(self, application_id: int) -> Application:
+        application = await self.applications.get_by_id(application_id)
+        if application is None:
+            raise ApplicationNotFoundError
+        if application.status not in REVOCABLE_STATUSES:
+            raise InvalidStatusTransitionError
+        application.status = ApplicationStatus.PENDING
+        self.db.add(application)
+        await self.db.commit()
+        await self._reload(application)
+        logger.info("Revoked approval for application id=%s", application.id)
         return application

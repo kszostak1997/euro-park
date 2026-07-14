@@ -1,5 +1,5 @@
 export interface ToastItem {
-  id: number
+  id: string
   status: number
   message: string
 }
@@ -17,18 +17,16 @@ const DEFAULT_MESSAGES: Record<number, string> = {
   500: 'Błąd serwera',
 }
 
-let nextToastId = 0
-
 export function useToast() {
   const toasts = useState<ToastItem[]>('toast-items', () => [])
 
-  function dismissToast(id: number) {
+  function dismissToast(id: string) {
     toasts.value = toasts.value.filter((toast) => toast.id !== id)
   }
 
   function showToast(status: number, message?: string) {
     const toast: ToastItem = {
-      id: ++nextToastId,
+      id: crypto.randomUUID(),
       status,
       message: message ?? DEFAULT_MESSAGES[status] ?? 'Nieznany błąd',
     }
@@ -36,13 +34,24 @@ export function useToast() {
     setTimeout(() => dismissToast(toast.id), 5000)
   }
 
-  function reportApiError(err: unknown, fallbackStatus = 500, fallbackMessage?: string): string {
+  function extractApiErrorMessage(
+    err: unknown,
+    fallbackStatus = 500,
+    fallbackMessage?: string,
+  ): string {
     const fetchError = err as { data?: { detail?: string }; status?: number }
     const status = fetchError.status ?? fallbackStatus
     const message = fetchError.data?.detail ?? fallbackMessage
-    showToast(status, message)
     return message ?? DEFAULT_MESSAGES[status] ?? 'Nieznany błąd'
   }
 
-  return { toasts, showToast, dismissToast, reportApiError }
+  function reportApiError(err: unknown, fallbackStatus = 500, fallbackMessage?: string): string {
+    const fetchError = err as { data?: { detail?: string }; status?: number }
+    const status = fetchError.status ?? fallbackStatus
+    const message = extractApiErrorMessage(err, fallbackStatus, fallbackMessage)
+    showToast(status, message)
+    return message
+  }
+
+  return { toasts, showToast, dismissToast, reportApiError, extractApiErrorMessage }
 }

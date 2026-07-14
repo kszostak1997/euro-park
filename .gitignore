@@ -1,0 +1,9 @@
+# Local env files (root, used by docker-compose)
+.env
+.env.*
+!.env.example
+
+# OS/editor
+.DS_Store
+.idea
+.fleet

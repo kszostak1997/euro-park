@@ -30,7 +30,8 @@ async def login(request: Request, data: LoginRequest, db: DbSession) -> TokenPai
 
 
 @router.post("/refresh", response_model=TokenPair)
-async def refresh(data: RefreshRequest, db: DbSession) -> TokenPair:
+@limiter.limit("10/minute")
+async def refresh(request: Request, data: RefreshRequest, db: DbSession) -> TokenPair:
     return await AuthService(db).refresh(data.refresh_token)
 
 

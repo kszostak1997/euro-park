@@ -1,5 +1,6 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.application import Application, ApplicationStatus
 
@@ -14,13 +15,17 @@ class ApplicationRepository:
         self.db = db
 
     async def create(
-        self, user_id: int, registration_number: str, floor: int, comment: str | None
+        self,
+        user_id: int,
+        registration_number: str,
+        floor: int,
+        applicant_comment: str | None,
     ) -> Application:
         application = Application(
             user_id=user_id,
             registration_number=registration_number,
             floor=floor,
-            comment=comment,
+            applicant_comment=applicant_comment,
         )
         self.db.add(application)
         await self.db.flush()
@@ -28,11 +33,17 @@ class ApplicationRepository:
         return application
 
     async def get_by_id(self, application_id: int) -> Application | None:
-        return await self.db.get(Application, application_id)
+        result = await self.db.execute(
+            select(Application)
+            .options(selectinload(Application.user))
+            .where(Application.id == application_id)
+        )
+        return result.scalar_one_or_none()
 
     async def list_by_user(self, user_id: int) -> list[Application]:
         result = await self.db.execute(
             select(Application)
+            .options(selectinload(Application.user))
             .where(Application.user_id == user_id)
             .order_by(Application.created_at.desc())
         )
@@ -55,6 +66,7 @@ class ApplicationRepository:
         order = column.desc() if descending else column.asc()
         items_stmt = (
             select(Application)
+            .options(selectinload(Application.user))
             .where(*filters)
             .order_by(order)
             .offset(offset)

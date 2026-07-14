@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import type { ApplicationPage, ApplicationRow } from '~/types/application'
 import type { SelectOption } from '~/types/form'
-import type { UserPage } from '~/types/user'
 
 const PAGE_SIZE = 10
 
-const { api } = useApiClient()
-const { showToast } = useToast()
+const { showToast, reportApiError } = useToast()
 const {
   listAll,
   approve: approveApplication,
   reject: rejectApplication,
   requestChanges,
+  revoke: revokeApplication,
 } = useApplications()
 
 const STATUS_FILTER_OPTIONS: SelectOption[] = [
@@ -29,11 +28,7 @@ watch(statusFilter, () => {
   page.value = 1
 })
 
-const {
-  data: applicationsPage,
-  pending,
-  refresh,
-} = useAsyncData<ApplicationPage>(
+const { data: applicationsPage, pending } = useAsyncData<ApplicationPage>(
   'manager-applications',
   () =>
     listAll({
@@ -46,45 +41,105 @@ const {
 
 const applications = computed<ApplicationRow[]>(() => applicationsPage.value?.items ?? [])
 
-const { data: usersForLabels } = useAsyncData<UserPage>('manager-users-all', () =>
-  api('/manager/users', { query: { size: 100 } }),
-)
-
-const userEmailById = computed(() => {
-  const map = new Map<number, string>()
-  for (const u of usersForLabels.value?.items ?? []) map.set(u.id, u.email)
-  return map
-})
-
-function userLabel(userId: number): string {
-  return userEmailById.value.get(userId) ?? `#${userId}`
-}
-
 const REVIEWABLE_STATUSES = new Set(['PENDING', 'NEEDS_CHANGES'])
 
 function isReviewable(status: string): boolean {
   return REVIEWABLE_STATUSES.has(status)
 }
 
-const actionLoadingId = ref<number | null>(null)
+function isRevocable(status: string): boolean {
+  return status === 'APPROVED'
+}
 
-async function runAction(app: ApplicationRow, fn: () => Promise<unknown>) {
-  actionLoadingId.value = app.id
-  try {
-    await fn()
-    showToast(200)
-    await refresh()
-  } catch (err: unknown) {
-    const fetchError = err as { data?: { detail?: string }; status?: number }
-    showToast(fetchError.status ?? 500, fetchError.data?.detail)
-  } finally {
-    actionLoadingId.value = null
+// Applies a mutated row without a full list refetch. If it no longer matches
+// the active status filter, it's dropped from the current page instead.
+function applyMutatedApplication(row: ApplicationRow) {
+  if (!applicationsPage.value) return
+  const items = applicationsPage.value.items
+  const idx = items.findIndex((a) => a.id === row.id)
+  if (idx === -1) return
+
+  const stillMatchesFilter = !statusFilter.value || row.status === statusFilter.value
+  if (!stillMatchesFilter) {
+    applicationsPage.value = {
+      ...applicationsPage.value,
+      items: items.filter((a) => a.id !== row.id),
+      total: applicationsPage.value.total - 1,
+    }
+    return
+  }
+
+  applicationsPage.value = {
+    ...applicationsPage.value,
+    items: [...items.slice(0, idx), row, ...items.slice(idx + 1)],
   }
 }
 
-const approve = (app: ApplicationRow) => runAction(app, () => approveApplication(app.id))
+const loadingIds = ref<number[]>([])
 
-const reject = (app: ApplicationRow) => runAction(app, () => rejectApplication(app.id))
+function isLoading(id: number): boolean {
+  return loadingIds.value.includes(id)
+}
+
+async function runAction(app: ApplicationRow, fn: () => Promise<ApplicationRow>) {
+  loadingIds.value = [...loadingIds.value, app.id]
+  try {
+    const updated = await fn()
+    showToast(200)
+    applyMutatedApplication(updated)
+  } catch (err: unknown) {
+    reportApiError(err)
+  } finally {
+    loadingIds.value = loadingIds.value.filter((id) => id !== app.id)
+  }
+}
+
+type ConfirmKind = 'approve' | 'reject' | 'revoke'
+
+const CONFIRM_COPY: Record<
+  ConfirmKind,
+  { title: string; question: (nr: string) => string; buttonLabel: string; variant: 'primary' | 'destructive' | 'outline' }
+> = {
+  approve: {
+    title: 'Zatwierdź wniosek',
+    question: (nr) => `Zatwierdzić wniosek ${nr}?`,
+    buttonLabel: 'Zatwierdź',
+    variant: 'primary',
+  },
+  reject: {
+    title: 'Odrzuć wniosek',
+    question: (nr) => `Odrzucić wniosek ${nr}?`,
+    buttonLabel: 'Odrzuć',
+    variant: 'destructive',
+  },
+  revoke: {
+    title: 'Cofnij zatwierdzenie',
+    question: (nr) => `Cofnąć zatwierdzenie wniosku ${nr}? Wniosek wróci do statusu oczekującego.`,
+    buttonLabel: 'Cofnij',
+    variant: 'outline',
+  },
+}
+
+const confirmTarget = ref<{ app: ApplicationRow; kind: ConfirmKind } | null>(null)
+
+const confirmCopy = computed(() => (confirmTarget.value ? CONFIRM_COPY[confirmTarget.value.kind] : null))
+
+function openConfirm(app: ApplicationRow, kind: ConfirmKind) {
+  confirmTarget.value = { app, kind }
+}
+
+function closeConfirm() {
+  confirmTarget.value = null
+}
+
+async function submitConfirm() {
+  if (!confirmTarget.value) return
+  const { app, kind } = confirmTarget.value
+  const action =
+    kind === 'approve' ? approveApplication : kind === 'reject' ? rejectApplication : revokeApplication
+  await runAction(app, () => action(app.id))
+  closeConfirm()
+}
 
 const requestChangesTarget = ref<ApplicationRow | null>(null)
 const requestChangesComment = ref('')
@@ -128,6 +183,30 @@ async function submitRequestChanges() {
       />
     </div>
 
+    <Modal
+      v-if="confirmTarget && confirmCopy"
+      :title="confirmCopy.title"
+      @close="closeConfirm"
+    >
+      <p class="modal-subtitle">{{ confirmCopy.question(confirmTarget.app.registration_number) }}</p>
+      <div class="form-actions">
+        <LoadingButton
+          :variant="confirmCopy.variant"
+          :loading="isLoading(confirmTarget.app.id)"
+          @click="submitConfirm"
+        >
+          {{ confirmCopy.buttonLabel }}
+        </LoadingButton>
+        <LoadingButton
+          variant="outline"
+          :disabled="isLoading(confirmTarget.app.id)"
+          @click="closeConfirm"
+        >
+          Anuluj
+        </LoadingButton>
+      </div>
+    </Modal>
+
     <Modal v-if="requestChangesTarget" title="Poproś o poprawki" @close="closeRequestChanges">
       <p class="modal-subtitle">{{ requestChangesTarget.registration_number }}</p>
       <FormInput
@@ -138,7 +217,7 @@ async function submitRequestChanges() {
       />
       <div class="form-actions">
         <LoadingButton
-          :loading="actionLoadingId === requestChangesTarget.id"
+          :loading="isLoading(requestChangesTarget.id)"
           :disabled="!requestChangesComment.trim()"
           @click="submitRequestChanges"
         >
@@ -146,7 +225,7 @@ async function submitRequestChanges() {
         </LoadingButton>
         <LoadingButton
           variant="outline"
-          :disabled="actionLoadingId === requestChangesTarget.id"
+          :disabled="isLoading(requestChangesTarget.id)"
           @click="closeRequestChanges"
         >
           Anuluj
@@ -200,7 +279,7 @@ async function submitRequestChanges() {
             <template v-for="a in applications" :key="a.id">
               <tr>
                 <td>{{ a.registration_number }}</td>
-                <td>{{ userLabel(a.user_id) }}</td>
+                <td>{{ a.user_email }}</td>
                 <td>{{ a.floor }}</td>
                 <td>{{ formatDate(a.created_at) }}</td>
                 <td><StatusBadge :status="a.status" /></td>
@@ -209,26 +288,36 @@ async function submitRequestChanges() {
                     <IconButton
                       variant="positive"
                       label="Zatwierdź"
-                      :disabled="actionLoadingId === a.id"
-                      @click="approve(a)"
+                      :disabled="isLoading(a.id)"
+                      @click="openConfirm(a, 'approve')"
                     >
                       <AppIcon name="check" />
                     </IconButton>
                     <IconButton
                       variant="destructive"
                       label="Odrzuć"
-                      :disabled="actionLoadingId === a.id"
-                      @click="reject(a)"
+                      :disabled="isLoading(a.id)"
+                      @click="openConfirm(a, 'reject')"
                     >
                       <AppIcon name="x" />
                     </IconButton>
                     <IconButton
                       variant="neutral"
                       label="Poproś o poprawki"
-                      :disabled="actionLoadingId === a.id"
+                      :disabled="isLoading(a.id)"
                       @click="openRequestChanges(a)"
                     >
                       <AppIcon name="message" />
+                    </IconButton>
+                  </div>
+                  <div v-else-if="isRevocable(a.status)" class="row-actions">
+                    <IconButton
+                      variant="neutral"
+                      label="Cofnij zatwierdzenie"
+                      :disabled="isLoading(a.id)"
+                      @click="openConfirm(a, 'revoke')"
+                    >
+                      <AppIcon name="undo" />
                     </IconButton>
                   </div>
                   <span v-else class="no-actions">—</span>
