@@ -3,7 +3,7 @@ withDefaults(
   defineProps<{
     loading?: boolean
     disabled?: boolean
-    variant?: 'primary' | 'grey' | 'outline'
+    variant?: 'primary' | 'grey' | 'outline' | 'destructive'
     type?: 'button' | 'submit'
   }>(),
   {

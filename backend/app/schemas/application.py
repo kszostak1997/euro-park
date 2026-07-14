@@ -1,33 +1,21 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.application import ApplicationStatus
-from app.schemas.validators import normalize_registration_number
+from app.schemas.validators import RegistrationNumber
 
 
 class ApplicationCreate(BaseModel):
-    registration_number: str = Field(min_length=4, max_length=20)
+    registration_number: RegistrationNumber
     floor: int
     comment: str | None = Field(default=None, max_length=500)
 
-    @field_validator("registration_number")
-    @classmethod
-    def validate_registration_number(cls, value: str) -> str:
-        return normalize_registration_number(value)
-
 
 class ApplicationUpdate(BaseModel):
-    registration_number: str | None = Field(default=None, min_length=4, max_length=20)
+    registration_number: RegistrationNumber | None = None
     floor: int | None = None
     comment: str | None = Field(default=None, max_length=500)
-
-    @field_validator("registration_number")
-    @classmethod
-    def validate_registration_number(cls, value: str | None) -> str | None:
-        if value is None:
-            return value
-        return normalize_registration_number(value)
 
 
 class ApplicationRead(BaseModel):

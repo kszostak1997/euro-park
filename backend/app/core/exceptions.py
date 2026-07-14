@@ -52,6 +52,16 @@ class InvalidStatusTransitionError(AppError):
     detail = "Application is not in a state that allows this transition"
 
 
+class UserNotFoundError(AppError):
+    status_code = 404
+    detail = "User not found"
+
+
+class CannotModifyOwnAccountError(AppError):
+    status_code = 409
+    detail = "You cannot delete or change the role of your own account"
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def app_error_handler(_: Request, exc: AppError) -> JSONResponse:

@@ -1,4 +1,4 @@
-export function useApi() {
+export function useApiClient() {
   const config = useRuntimeConfig()
   const baseURL = import.meta.server ? config.apiBase : config.public.apiBase
 
@@ -54,5 +54,5 @@ export function useApi() {
     },
   })
 
-  return { api, accessToken, refreshToken, clearTokens }
+  return { api, accessToken, refreshToken, clearTokens, baseURL }
 }

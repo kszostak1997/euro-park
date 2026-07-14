@@ -18,13 +18,17 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
 
-    admin_email: str = "admin@eurocert.com"
-    admin_password: str = "admin"
+    cors_origins: list[str] = ["http://localhost:3000"]
 
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    if not settings.debug and settings.jwt_secret == "PLACEHOLDER":
+        raise RuntimeError(
+            "JWT_SECRET must be set to a real secret when DEBUG is disabled"
+        )
+    return settings
 
 
 settings = get_settings()

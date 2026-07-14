@@ -7,7 +7,7 @@ const error = ref('')
 const loading = ref(false)
 
 const { login } = useAuth()
-const { showToast } = useToast()
+const { reportApiError } = useToast()
 
 async function handleSubmit() {
   error.value = ''
@@ -16,9 +16,7 @@ async function handleSubmit() {
     const user = await login(email.value, password.value)
     await navigateTo(roleLandingPath(user.role))
   } catch (err: unknown) {
-    const fetchError = err as { data?: { detail?: string }; status?: number }
-    error.value = fetchError.data?.detail ?? 'Nie udało się zalogować'
-    showToast(fetchError.status ?? 401, error.value)
+    error.value = reportApiError(err, 401, 'Nie udało się zalogować')
   } finally {
     loading.value = false
   }

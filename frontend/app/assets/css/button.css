@@ -40,6 +40,14 @@
   background-color: #eff6ff;
 }
 
+.btn--destructive {
+  background-color: var(--color-error);
+}
+
+.btn--destructive:hover:not(:disabled) {
+  background-color: #a5311f;
+}
+
 .btn--full {
   width: 100%;
 }

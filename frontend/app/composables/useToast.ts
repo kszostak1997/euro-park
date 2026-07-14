@@ -7,6 +7,7 @@ export interface ToastItem {
 const DEFAULT_MESSAGES: Record<number, string> = {
   200: 'Akcja zakończona pomyślnie',
   201: 'Akcja zakończona pomyślnie',
+  400: 'Nieprawidłowe dane',
   401: 'Nie jesteś zalogowany',
   403: 'Brak dostępu',
   404: 'Nie znaleziono',
@@ -35,5 +36,13 @@ export function useToast() {
     setTimeout(() => dismissToast(toast.id), 5000)
   }
 
-  return { toasts, showToast, dismissToast }
+  function reportApiError(err: unknown, fallbackStatus = 500, fallbackMessage?: string): string {
+    const fetchError = err as { data?: { detail?: string }; status?: number }
+    const status = fetchError.status ?? fallbackStatus
+    const message = fetchError.data?.detail ?? fallbackMessage
+    showToast(status, message)
+    return message ?? DEFAULT_MESSAGES[status] ?? 'Nieznany błąd'
+  }
+
+  return { toasts, showToast, dismissToast, reportApiError }
 }

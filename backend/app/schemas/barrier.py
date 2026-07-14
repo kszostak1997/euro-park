@@ -1,15 +1,10 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel
 
-from app.schemas.validators import normalize_registration_number
+from app.schemas.validators import RegistrationNumber
 
 
 class BarrierCheckRequest(BaseModel):
-    registration_number: str = Field(min_length=4, max_length=20)
-
-    @field_validator("registration_number")
-    @classmethod
-    def validate_registration_number(cls, value: str) -> str:
-        return normalize_registration_number(value)
+    registration_number: RegistrationNumber
 
 
 class BarrierCheckResponse(BaseModel):

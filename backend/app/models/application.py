@@ -25,11 +25,12 @@ class Application(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
-    registration_number: Mapped[str] = mapped_column(String(20))
+    registration_number: Mapped[str] = mapped_column(String(20), index=True)
     floor: Mapped[int] = mapped_column(Integer)
     status: Mapped[ApplicationStatus] = mapped_column(
         Enum(ApplicationStatus, native_enum=False, length=20),
         default=ApplicationStatus.PENDING,
+        index=True,
     )
     comment: Mapped[str | None] = mapped_column(String(500), default=None)
     created_at: Mapped[datetime] = mapped_column(

@@ -10,6 +10,14 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=4, max_length=128)
 
 
+class AdminUserCreate(UserCreate):
+    role: RoleEnum = RoleEnum.USER
+
+
+class UserRoleUpdate(BaseModel):
+    role: RoleEnum
+
+
 class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -18,3 +26,10 @@ class UserRead(BaseModel):
     role: RoleEnum
     is_active: bool
     created_at: datetime
+
+
+class UserPage(BaseModel):
+    items: list[UserRead]
+    total: int
+    page: int
+    size: int

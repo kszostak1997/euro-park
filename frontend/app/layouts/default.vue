@@ -11,17 +11,22 @@ async function handleLogout() {
 <template>
   <div>
     <header class="app-header">
-      <span style="font-weight: 600">Euro Park</span>
+      <div class="app-header-left">
+        <span class="app-brand">Euro Park</span>
+        <nav v-if="isLoggedIn" class="app-tabs">
+          <NuxtLink v-if="user?.role === 'USER'" to="/user">Moje wnioski</NuxtLink>
+          <template v-else>
+            <NuxtLink to="/manager" active-class="" exact-active-class="router-link-active">
+              Wnioski
+            </NuxtLink>
+            <NuxtLink to="/manager/users">Użytkownicy</NuxtLink>
+          </template>
+        </nav>
+      </div>
       <nav class="app-nav">
         <template v-if="isLoggedIn">
-          <NuxtLink v-if="user?.role === 'USER'" to="/applications"
-            >Moje wnioski</NuxtLink
-          >
-          <NuxtLink v-else to="/manager">Panel zarządcy</NuxtLink>
-          <span class="app-nav-email">{{ user?.email }}</span>
-          <button class="btn btn--outline" type="button" @click="handleLogout">
-            Wyloguj
-          </button>
+          <span class="app-nav-email">{{ user?.email }} ({{ user?.role }})</span>
+          <LoadingButton variant="outline" @click="handleLogout">Wyloguj</LoadingButton>
         </template>
         <template v-else>
           <NuxtLink to="/login">Zaloguj</NuxtLink>

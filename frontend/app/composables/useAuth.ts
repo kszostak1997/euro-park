@@ -13,14 +13,12 @@ interface TokenPair {
 }
 
 export function roleLandingPath(role: string): string {
-  return role === 'USER' ? '/applications' : '/manager'
+  return role === 'USER' ? '/user' : '/manager'
 }
 
 export function useAuth() {
   const user = useState<AuthUser | null>('auth-user', () => null)
-  const { api, accessToken, refreshToken, clearTokens } = useApi()
-  const config = useRuntimeConfig()
-  const baseURL = import.meta.server ? config.apiBase : config.public.apiBase
+  const { api, accessToken, refreshToken, clearTokens, baseURL } = useApiClient()
 
   const isLoggedIn = computed(() => user.value !== null)
 

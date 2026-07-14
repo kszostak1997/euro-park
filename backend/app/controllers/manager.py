@@ -1,35 +1,72 @@
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import require_role
-from app.models.application import ApplicationStatus
+from app.models.application import Application, ApplicationStatus
 from app.models.user import RoleEnum, User
-from app.repositories.user_repository import UserRepository
 from app.schemas.application import (
     ApplicationPage,
     ApplicationRead,
     ManagerReviewComment,
 )
-from app.schemas.user import UserRead
+from app.schemas.user import AdminUserCreate, UserPage, UserRead, UserRoleUpdate
 from app.services.application_service import ApplicationService
+from app.services.user_service import UserService
 
 router = APIRouter(prefix="/manager/applications", tags=["manager"])
 users_router = APIRouter(prefix="/manager/users", tags=["manager"])
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
 ManagerUser = Annotated[User, Depends(require_role(RoleEnum.MANAGER, RoleEnum.ADMIN))]
+AdminUser = Annotated[User, Depends(require_role(RoleEnum.ADMIN))]
 
 
 @users_router.get(
     "",
-    response_model=list[UserRead],
-    summary="List all registered users",
+    response_model=UserPage,
+    summary="List all registered users with pagination",
 )
-async def list_users(db: DbSession, _: ManagerUser) -> list[User]:
-    return await UserRepository(db).list_all()
+async def list_users(
+    db: DbSession,
+    _: ManagerUser,
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+) -> UserPage:
+    items, total = await UserService(db).list_all(page, size)
+    return UserPage(items=items, total=total, page=page, size=size)
+
+
+@users_router.post(
+    "",
+    response_model=UserRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new user (admin only)",
+)
+async def create_user(data: AdminUserCreate, db: DbSession, _: AdminUser) -> User:
+    return await UserService(db).create(data.email, data.password, data.role)
+
+
+@users_router.patch(
+    "/{user_id}/role",
+    response_model=UserRead,
+    summary="Change a user's role (admin only)",
+)
+async def update_user_role(
+    user_id: int, data: UserRoleUpdate, db: DbSession, actor: AdminUser
+) -> User:
+    return await UserService(db).update_role(actor, user_id, data.role)
+
+
+@users_router.delete(
+    "/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a user (admin only)",
+)
+async def delete_user(user_id: int, db: DbSession, actor: AdminUser) -> None:
+    await UserService(db).delete(actor, user_id)
 
 
 @router.get(
@@ -57,7 +94,9 @@ async def list_applications(
     response_model=ApplicationRead,
     summary="Approve a pending or needs-changes application",
 )
-async def approve_application(application_id: int, db: DbSession, _: ManagerUser):
+async def approve_application(
+    application_id: int, db: DbSession, _: ManagerUser
+) -> Application:
     return await ApplicationService(db).approve(application_id)
 
 
@@ -66,7 +105,9 @@ async def approve_application(application_id: int, db: DbSession, _: ManagerUser
     response_model=ApplicationRead,
     summary="Reject a pending or needs-changes application",
 )
-async def reject_application(application_id: int, db: DbSession, _: ManagerUser):
+async def reject_application(
+    application_id: int, db: DbSession, _: ManagerUser
+) -> Application:
     return await ApplicationService(db).reject(application_id)
 
 
@@ -77,5 +118,5 @@ async def reject_application(application_id: int, db: DbSession, _: ManagerUser)
 )
 async def request_changes(
     application_id: int, data: ManagerReviewComment, db: DbSession, _: ManagerUser
-):
+) -> Application:
     return await ApplicationService(db).request_changes(application_id, data.comment)

@@ -53,6 +53,8 @@ class ApplicationService:
             application.floor = data.floor
         if data.comment is not None:
             application.comment = data.comment
+        if application.status == ApplicationStatus.NEEDS_CHANGES:
+            application.status = ApplicationStatus.PENDING
 
         self.db.add(application)
         await self.db.commit()

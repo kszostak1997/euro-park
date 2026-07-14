@@ -1,28 +1,11 @@
 from httpx import AsyncClient
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import RoleEnum, User
+from tests.conftest import promote_to_manager as _promote_to_manager
+from tests.conftest import register_and_login as _register_and_login
 
 RESIDENT_EMAIL = "resident@example.com"
 MANAGER_EMAIL = "manager@example.com"
-PASSWORD = "supersecret123"
-
-
-async def _register_and_login(client: AsyncClient, email: str) -> str:
-    await client.post("/auth/register", json={"email": email, "password": PASSWORD})
-    login = await client.post(
-        "/auth/login", json={"email": email, "password": PASSWORD}
-    )
-    return login.json()["access_token"]
-
-
-async def _promote_to_manager(db_session: AsyncSession, email: str) -> None:
-    result = await db_session.execute(select(User).where(User.email == email))
-    user = result.scalar_one()
-    user.role = RoleEnum.MANAGER
-    db_session.add(user)
-    await db_session.commit()
 
 
 async def test_barrier_denies_unknown_plate(client: AsyncClient) -> None:

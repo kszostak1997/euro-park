@@ -16,7 +16,7 @@ const passwordError = ref('')
 const passwordConfirmError = ref('')
 
 const { register, login } = useAuth()
-const { showToast } = useToast()
+const { showToast, reportApiError } = useToast()
 
 function validate(): boolean {
   emailError.value = EMAIL_PATTERN.test(email.value)
@@ -47,9 +47,7 @@ async function handleSubmit() {
     showToast(200, 'Konto zostało utworzone')
     await navigateTo(roleLandingPath(user.role))
   } catch (err: unknown) {
-    const fetchError = err as { data?: { detail?: string }; status?: number }
-    error.value = fetchError.data?.detail ?? 'Nie udało się zarejestrować'
-    showToast(fetchError.status ?? 400, error.value)
+    error.value = reportApiError(err, 400, 'Nie udało się zarejestrować')
   } finally {
     loading.value = false
   }
