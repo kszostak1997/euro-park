@@ -314,7 +314,7 @@ async function submitRequestChanges() {
                       <AppIcon name="undo" />
                     </IconButton>
                   </div>
-                  <span v-else class="no-actions">—</span>
+                  <span v-else class="no-actions">-</span>
                 </td>
               </tr>
             </template>
