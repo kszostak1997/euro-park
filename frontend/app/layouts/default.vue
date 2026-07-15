@@ -24,6 +24,7 @@ async function handleLogout() {
               Wnioski
             </NuxtLink>
             <NuxtLink to="/manager/users">Użytkownicy</NuxtLink>
+            <NuxtLink to="/manager/barrier">Brama (test)</NuxtLink>
           </template>
         </nav>
       </div>

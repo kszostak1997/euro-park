@@ -2,6 +2,8 @@
 import type { ApplicationPage, ApplicationRow } from '~/types/application'
 import type { SelectOption } from '~/types/form'
 
+definePageMeta({ layout: 'manager', middleware: ['auth', 'manager'] })
+
 const PAGE_SIZE = 10
 
 const { showToast, reportApiError } = useToast()
@@ -40,6 +42,15 @@ const { data: applicationsPage, pending } = useAsyncData<ApplicationPage>(
 )
 
 const applications = computed<ApplicationRow[]>(() => applicationsPage.value?.items ?? [])
+
+const applicationsWord = computed(() => {
+  const total = applicationsPage.value?.total ?? 0
+  if (total === 1) return 'wniosek'
+  const mod10 = total % 10
+  const mod100 = total % 100
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return 'wnioski'
+  return 'wniosków'
+})
 
 const REVIEWABLE_STATUSES = new Set(['PENDING', 'NEEDS_CHANGES'])
 
@@ -168,7 +179,7 @@ async function submitRequestChanges() {
         <p class="panel-subtitle">
           <span v-if="pending" class="sk sk-subtitle" />
           <template v-else>
-            {{ applicationsPage?.total ?? 0 }} {{ pluralWniosek(applicationsPage?.total ?? 0) }}
+            {{ applicationsPage?.total ?? 0 }} {{ applicationsWord }}
           </template>
         </p>
       </div>

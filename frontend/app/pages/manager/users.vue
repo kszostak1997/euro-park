@@ -2,6 +2,8 @@
 import type { SelectOption } from '~/types/form'
 import type { AuthUser, UserPage } from '~/types/user'
 
+definePageMeta({ layout: 'manager', middleware: ['auth', 'manager'] })
+
 const PAGE_SIZE = 10
 
 const { user } = useAuth()

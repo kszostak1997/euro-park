@@ -19,7 +19,15 @@ const needsChangesCount = computed(
 const subtitleText = computed(() => {
   const total = (applications.value ?? []).length
   if (total === 0) return 'Nie masz jeszcze żadnych wniosków'
-  let text = `${total} ${pluralWniosek(total)}`
+  const mod10 = total % 10
+  const mod100 = total % 100
+  const word =
+    total === 1
+      ? 'wniosek'
+      : mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)
+        ? 'wnioski'
+        : 'wniosków'
+  let text = `${total} ${word}`
   if (needsChangesCount.value > 0) {
     const verb = needsChangesCount.value === 1 ? 'wymaga poprawy' : 'wymagają poprawy'
     text += ` · ${needsChangesCount.value} ${verb}`
@@ -40,7 +48,6 @@ const editingManagerComment = ref<string | null>(null)
 const formRegistrationNumber = ref('')
 const formRegistrationNumberError = ref('')
 const formFloor = ref(0)
-const formComment = ref('')
 
 function openForm(application?: ApplicationRow) {
   formMode.value = application ? 'edit' : 'create'
@@ -49,7 +56,6 @@ function openForm(application?: ApplicationRow) {
   formRegistrationNumber.value = application?.registration_number ?? ''
   formRegistrationNumberError.value = ''
   formFloor.value = application?.floor ?? 0
-  formComment.value = application?.applicant_comment ?? ''
   showForm.value = true
 }
 
@@ -82,7 +88,6 @@ function submitForm() {
   const data = {
     registration_number: formRegistrationNumber.value,
     floor: formFloor.value,
-    applicant_comment: formComment.value || null,
   }
   return formMode.value === 'create'
     ? submitFormAction(() => create(data), 201)
@@ -128,12 +133,6 @@ function submitForm() {
           v-model="formFloor"
           label="Piętro"
           :options="FLOOR_OPTIONS"
-        />
-        <FormInput
-          id="formComment"
-          v-model="formComment"
-          label="Komentarz (opcjonalnie)"
-          placeholder="Dodatkowe informacje"
         />
         <div class="form-actions">
           <LoadingButton :loading="formLoading" @click="submitForm">
