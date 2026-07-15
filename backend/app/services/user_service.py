@@ -7,6 +7,7 @@ from app.core.exceptions import (
     EmailAlreadyRegisteredError,
     UserNotFoundError,
 )
+from app.core.pagination import page_to_offset
 from app.core.security import hash_password
 from app.models.user import RoleEnum, User
 from app.repositories.user_repository import UserRepository
@@ -20,7 +21,7 @@ class UserService:
         self.users = UserRepository(db)
 
     async def list_all(self, page: int, size: int) -> tuple[list[User], int]:
-        offset = (page - 1) * size
+        offset = page_to_offset(page, size)
         return await self.users.list_all(offset, size)
 
     async def create(self, email: str, password: str, role: RoleEnum) -> User:

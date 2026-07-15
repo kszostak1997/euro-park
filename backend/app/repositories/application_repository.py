@@ -1,7 +1,8 @@
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.pagination import paginate
 from app.models.application import Application, ApplicationStatus
 
 SORTABLE_COLUMNS = {
@@ -58,22 +59,15 @@ class ApplicationRepository:
         descending: bool,
     ) -> tuple[list[Application], int]:
         filters = [Application.status == status_filter] if status_filter else []
-
-        count_stmt = select(func.count()).select_from(Application).where(*filters)
-        total = (await self.db.execute(count_stmt)).scalar_one()
-
         column = SORTABLE_COLUMNS[sort_by]
         order = column.desc() if descending else column.asc()
-        items_stmt = (
+        stmt = (
             select(Application)
             .options(selectinload(Application.user))
             .where(*filters)
             .order_by(order)
-            .offset(offset)
-            .limit(limit)
         )
-        result = await self.db.execute(items_stmt)
-        return list(result.scalars().all()), total
+        return await paginate(self.db, stmt, offset, limit)
 
     async def get_approved_by_plate(
         self, registration_number: str

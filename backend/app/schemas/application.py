@@ -3,6 +3,7 @@ from typing import Annotated
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from app.models.application import ApplicationStatus
+from app.schemas.pagination import Page
 from app.schemas.validators import AwareDatetime, RegistrationNumber
 
 MIN_FLOOR = 0
@@ -39,11 +40,7 @@ class ApplicationRead(BaseModel):
     created_at: AwareDatetime
 
 
-class ApplicationPage(BaseModel):
-    items: list[ApplicationRead]
-    total: int
-    page: int
-    size: int
+ApplicationPage = Page[ApplicationRead]
 
 
 class ManagerReviewComment(BaseModel):

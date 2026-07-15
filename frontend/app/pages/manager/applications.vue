@@ -6,7 +6,6 @@ definePageMeta({ layout: 'manager', middleware: ['auth', 'manager'] })
 
 const PAGE_SIZE = 10
 
-const { showToast, reportApiError } = useToast()
 const {
   listAll,
   approve: approveApplication,
@@ -43,14 +42,9 @@ const { data: applicationsPage, pending } = useAsyncData<ApplicationPage>(
 
 const applications = computed<ApplicationRow[]>(() => applicationsPage.value?.items ?? [])
 
-const applicationsWord = computed(() => {
-  const total = applicationsPage.value?.total ?? 0
-  if (total === 1) return 'wniosek'
-  const mod10 = total % 10
-  const mod100 = total % 100
-  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return 'wnioski'
-  return 'wniosków'
-})
+const applicationsWord = computed(() =>
+  pluralizePl(applicationsPage.value?.total ?? 0, ['wniosek', 'wnioski', 'wniosków']),
+)
 
 const REVIEWABLE_STATUSES = new Set(['PENDING', 'NEEDS_CHANGES'])
 
@@ -80,27 +74,14 @@ function applyMutatedApplication(row: ApplicationRow) {
 
   applicationsPage.value = {
     ...applicationsPage.value,
-    items: [...items.slice(0, idx), row, ...items.slice(idx + 1)],
+    items: replaceById(items, row),
   }
 }
 
-const loadingIds = ref<number[]>([])
+const { isLoading, run: runOnApp } = useKeyedAction<ApplicationRow>(applyMutatedApplication)
 
-function isLoading(id: number): boolean {
-  return loadingIds.value.includes(id)
-}
-
-async function runAction(app: ApplicationRow, fn: () => Promise<ApplicationRow>) {
-  loadingIds.value = [...loadingIds.value, app.id]
-  try {
-    const updated = await fn()
-    showToast(200)
-    applyMutatedApplication(updated)
-  } catch (err: unknown) {
-    reportApiError(err)
-  } finally {
-    loadingIds.value = loadingIds.value.filter((id) => id !== app.id)
-  }
+function runAction(app: ApplicationRow, fn: () => Promise<ApplicationRow>) {
+  return runOnApp(app.id, fn)
 }
 
 type ConfirmKind = 'approve' | 'reject' | 'revoke'
@@ -129,16 +110,16 @@ const CONFIRM_COPY: Record<
   },
 }
 
-const confirmTarget = ref<{ app: ApplicationRow; kind: ConfirmKind } | null>(null)
+const {
+  target: confirmTarget,
+  open: openConfirmRaw,
+  close: closeConfirm,
+} = useDisclosure<{ app: ApplicationRow; kind: ConfirmKind }>()
 
 const confirmCopy = computed(() => (confirmTarget.value ? CONFIRM_COPY[confirmTarget.value.kind] : null))
 
 function openConfirm(app: ApplicationRow, kind: ConfirmKind) {
-  confirmTarget.value = { app, kind }
-}
-
-function closeConfirm() {
-  confirmTarget.value = null
+  openConfirmRaw({ app, kind })
 }
 
 async function submitConfirm() {
@@ -150,17 +131,21 @@ async function submitConfirm() {
   closeConfirm()
 }
 
-const requestChangesTarget = ref<ApplicationRow | null>(null)
+const {
+  target: requestChangesTarget,
+  open: openRequestChangesRaw,
+  close: closeRequestChangesRaw,
+} = useDisclosure<ApplicationRow>()
 const requestChangesComment = ref('')
 
 function openRequestChanges(app: ApplicationRow) {
-  requestChangesTarget.value = app
   requestChangesComment.value = ''
+  openRequestChangesRaw(app)
 }
 
 function closeRequestChanges() {
-  requestChangesTarget.value = null
   requestChangesComment.value = ''
+  closeRequestChangesRaw()
 }
 
 async function submitRequestChanges() {
@@ -361,14 +346,5 @@ async function submitRequestChanges() {
 .status-filter {
   min-width: 200px;
   margin-bottom: 0;
-}
-
-.empty-row {
-  text-align: center;
-  color: var(--color-grey-dark);
-}
-
-.pagination-slot {
-  min-height: 2.5rem;
 }
 </style>

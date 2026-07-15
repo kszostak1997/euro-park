@@ -332,6 +332,15 @@ a {
   height: 3.5rem;
 }
 
+.empty-row {
+  text-align: center;
+  color: var(--color-grey-dark);
+}
+
+.pagination-slot {
+  min-height: 2.5rem;
+}
+
 /* Shared by application/user forms and tables across pages */
 .form-actions {
   display: flex;

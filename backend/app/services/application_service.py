@@ -7,6 +7,7 @@ from app.core.exceptions import (
     ApplicationNotFoundError,
     InvalidStatusTransitionError,
 )
+from app.core.pagination import page_to_offset
 from app.models.application import Application, ApplicationStatus
 from app.models.user import User
 from app.repositories.application_repository import ApplicationRepository
@@ -88,7 +89,7 @@ class ApplicationService:
         sort_by: str,
         descending: bool,
     ) -> tuple[list[Application], int]:
-        offset = (page - 1) * size
+        offset = page_to_offset(page, size)
         return await self.applications.list_all(
             status_filter, offset, size, sort_by, descending
         )

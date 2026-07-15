@@ -31,7 +31,7 @@ const ROLE_OPTIONS: SelectOption[] = [
   { value: 'ADMIN', label: 'ADMIN' },
 ]
 
-const showUserForm = ref(false)
+const { target: showUserForm, open: openCreateUserRaw, close: closeCreateUser } = useDisclosure()
 const newUserEmail = ref('')
 const newUserPassword = ref('')
 const newUserRole = ref('USER')
@@ -40,11 +40,7 @@ function openCreateUser() {
   newUserEmail.value = ''
   newUserPassword.value = ''
   newUserRole.value = 'USER'
-  showUserForm.value = true
-}
-
-function closeCreateUser() {
-  showUserForm.value = false
+  openCreateUserRaw()
 }
 
 const { loading: userFormLoading, submit: submitCreateUserAction } = useModalForm(async () => {
@@ -67,16 +63,12 @@ function submitCreateUser() {
   )
 }
 
-const editUserTarget = ref<AuthUser | null>(null)
+const { target: editUserTarget, open: openEditUserRaw, close: closeEditUser } = useDisclosure<AuthUser>()
 const editUserRole = ref('USER')
 
 function openEditUser(target: AuthUser) {
-  editUserTarget.value = target
   editUserRole.value = target.role
-}
-
-function closeEditUser() {
-  editUserTarget.value = null
+  openEditUserRaw(target)
 }
 
 const { loading: editUserLoading, submit: submitEditUserAction } = useModalForm(async () => {
@@ -94,15 +86,11 @@ function submitEditUser() {
   )
 }
 
-const deleteConfirmTarget = ref<AuthUser | null>(null)
-
-function openDeleteUser(target: AuthUser) {
-  deleteConfirmTarget.value = target
-}
-
-function closeDeleteUser() {
-  deleteConfirmTarget.value = null
-}
+const {
+  target: deleteConfirmTarget,
+  open: openDeleteUser,
+  close: closeDeleteUser,
+} = useDisclosure<AuthUser>()
 
 const { loading: deleteUserLoading, submit: confirmDeleteUserAction } = useModalForm(async () => {
   closeDeleteUser()
@@ -270,13 +258,3 @@ function confirmDeleteUser() {
   </section>
 </template>
 
-<style scoped>
-.empty-row {
-  text-align: center;
-  color: var(--color-grey-dark);
-}
-
-.pagination-slot {
-  min-height: 2.5rem;
-}
-</style>

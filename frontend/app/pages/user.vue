@@ -19,14 +19,7 @@ const needsChangesCount = computed(
 const subtitleText = computed(() => {
   const total = (applications.value ?? []).length
   if (total === 0) return 'Nie masz jeszcze żadnych wniosków'
-  const mod10 = total % 10
-  const mod100 = total % 100
-  const word =
-    total === 1
-      ? 'wniosek'
-      : mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)
-        ? 'wnioski'
-        : 'wniosków'
+  const word = pluralizePl(total, ['wniosek', 'wnioski', 'wniosków'])
   let text = `${total} ${word}`
   if (needsChangesCount.value > 0) {
     const verb = needsChangesCount.value === 1 ? 'wymaga poprawy' : 'wymagają poprawy'
@@ -41,7 +34,7 @@ const FLOOR_OPTIONS: SelectOption<number>[] = [
   { value: 2, label: 'Piętro 2' },
 ]
 
-const showForm = ref(false)
+const { target: showForm, open: openFormRaw, close: closeForm } = useDisclosure()
 const formMode = ref<'create' | 'edit'>('create')
 const editingId = ref<number | null>(null)
 const editingManagerComment = ref<string | null>(null)
@@ -56,18 +49,12 @@ function openForm(application?: ApplicationRow) {
   formRegistrationNumber.value = application?.registration_number ?? ''
   formRegistrationNumberError.value = ''
   formFloor.value = application?.floor ?? 0
-  showForm.value = true
-}
-
-function closeForm() {
-  showForm.value = false
+  openFormRaw()
 }
 
 function upsertApplication(row: ApplicationRow) {
   const list = applications.value ?? []
-  const idx = list.findIndex((a) => a.id === row.id)
-  applications.value =
-    idx === -1 ? [row, ...list] : [...list.slice(0, idx), row, ...list.slice(idx + 1)]
+  applications.value = list.some((a) => a.id === row.id) ? replaceById(list, row) : [row, ...list]
 }
 
 const { loading: formLoading, submit: submitFormAction } = useModalForm<ApplicationRow>((row) => {

@@ -108,7 +108,7 @@ onUnmounted(() => {
         :id="id"
         ref="triggerEl"
         type="button"
-        class="select-trigger"
+        class="select-trigger field-control"
         :class="{ 'select-trigger--open': isOpen }"
         :disabled="disabled"
         :aria-expanded="isOpen"
@@ -163,13 +163,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.65rem 0.75rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  font-size: 1rem;
   font-family: inherit;
-  background: #fff;
-  color: var(--color-text);
   cursor: pointer;
   text-align: left;
 }
@@ -198,6 +192,7 @@ onUnmounted(() => {
 </style>
 
 <style>
+/* Not scoped: this targets the <ul> teleported to <body>, which scoped attribute selectors can't reach. */
 .select-menu {
   position: fixed;
   z-index: 120;

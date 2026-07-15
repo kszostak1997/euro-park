@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models.user import RoleEnum
+from app.schemas.pagination import Page
 from app.schemas.validators import AwareDatetime
 
 
@@ -27,8 +28,4 @@ class UserRead(BaseModel):
     created_at: AwareDatetime
 
 
-class UserPage(BaseModel):
-    items: list[UserRead]
-    total: int
-    page: int
-    size: int
+UserPage = Page[UserRead]

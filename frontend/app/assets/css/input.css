@@ -11,10 +11,7 @@
   color: var(--color-grey-dark);
 }
 
-.input,
-.select,
-.field input,
-.field select {
+.field-control {
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -23,15 +20,7 @@
   color: var(--color-text);
 }
 
-.select,
-.field select {
-  cursor: pointer;
-}
-
-.input:focus,
-.select:focus,
-.field input:focus,
-.field select:focus {
+.field-control:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: var(--shadow-focus);
@@ -43,12 +32,10 @@
   color: var(--color-error);
 }
 
-.field--error input,
-.field--error select {
+.field--error .field-control {
   border-color: var(--color-error);
 }
 
-.field--error input:focus,
-.field--error select:focus {
+.field--error .field-control:focus {
   box-shadow: var(--shadow-focus-error);
 }

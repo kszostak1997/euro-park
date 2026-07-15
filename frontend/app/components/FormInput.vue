@@ -29,6 +29,7 @@ const inputType = computed(() => {
       <input
         :id="id"
         v-model="model"
+        class="field-control"
         :type="inputType"
         :placeholder="placeholder"
         :disabled="disabled"
