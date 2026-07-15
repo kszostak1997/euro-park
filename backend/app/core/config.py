@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "Euro Park API"
-    debug: bool = True
+    debug: bool = False
 
     database_url: str = "sqlite+aiosqlite:///./euro_park.db"
 
