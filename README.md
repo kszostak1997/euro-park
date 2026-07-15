@@ -5,13 +5,24 @@ Aplikacja webowa dla wspólnoty mieszkaniowej "Euro Park" do składania i obsłu
 ## Setup (Docker)
 
 ```bash
-cp .env.example .env   # wygeneruj sekret: python3 -c "import secrets; print(secrets.token_urlsafe(48))"
+cp .env.example .env   
+# wklej wygenerowany sekret jako JWT_SECRET do .env, 
+# sekret mozna wygenerowac za pomoca (python3 -c "import secrets; print(secrets.token_urlsafe(48))")
 docker compose up --build
 ```
 
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8000
 - Swagger / OpenAPI docs: http://localhost:8000/docs
+
+## lint / formatowanie / testy z poziomu dockera
+
+docker compose exec backend ruff check .
+docker compose exec backend black .
+docker compose exec backend pytest
+
+docker compose exec frontend npm run lint
+docker compose exec frontend npm run format
 
 ## Konta testowe (seedowane automatycznie przy starcie backendu)
 

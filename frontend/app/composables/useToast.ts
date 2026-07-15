@@ -54,11 +54,16 @@ export function useToast() {
     const status = fetchError.status ?? fallbackStatus
     const detail = fetchError.data?.detail
     const message =
-      (typeof detail === 'string' ? detail : formatValidationDetail(detail)) ?? fallbackMessage
+      (typeof detail === 'string' ? detail : formatValidationDetail(detail)) ??
+      fallbackMessage
     return message ?? DEFAULT_MESSAGES[status] ?? 'Nieznany błąd'
   }
 
-  function reportApiError(err: unknown, fallbackStatus = 500, fallbackMessage?: string): string {
+  function reportApiError(
+    err: unknown,
+    fallbackStatus = 500,
+    fallbackMessage?: string,
+  ): string {
     const fetchError = err as { status?: number }
     const status = fetchError.status ?? fallbackStatus
     const message = extractApiErrorMessage(err, fallbackStatus, fallbackMessage)

@@ -1,4 +1,8 @@
-import type { ApplicationInput, ApplicationPage, ApplicationRow } from '~/types/application'
+import type {
+  ApplicationInput,
+  ApplicationPage,
+  ApplicationRow,
+} from '~/types/application'
 
 export function useApplications() {
   const { api } = useApiClient()
@@ -11,7 +15,10 @@ export function useApplications() {
     return api<ApplicationRow>('/applications', { method: 'POST', body: data })
   }
 
-  function update(id: number, data: Partial<ApplicationInput>): Promise<ApplicationRow> {
+  function update(
+    id: number,
+    data: Partial<ApplicationInput>,
+  ): Promise<ApplicationRow> {
     return api<ApplicationRow>(`/applications/${id}`, { method: 'PATCH', body: data })
   }
 
@@ -24,7 +31,9 @@ export function useApplications() {
   }
 
   function approve(id: number): Promise<ApplicationRow> {
-    return api<ApplicationRow>(`/manager/applications/${id}/approve`, { method: 'POST' })
+    return api<ApplicationRow>(`/manager/applications/${id}/approve`, {
+      method: 'POST',
+    })
   }
 
   function reject(id: number): Promise<ApplicationRow> {

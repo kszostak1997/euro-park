@@ -65,5 +65,13 @@ export function useAuth() {
     return user.value
   }
 
-  return { user, isLoggedIn, register, login, logout, fetchCurrentUser, ensureCurrentUser }
+  return {
+    user,
+    isLoggedIn,
+    register,
+    login,
+    logout,
+    fetchCurrentUser,
+    ensureCurrentUser,
+  }
 }

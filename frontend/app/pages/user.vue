@@ -54,18 +54,24 @@ function openForm(application?: ApplicationRow) {
 
 function upsertApplication(row: ApplicationRow) {
   const list = applications.value ?? []
-  applications.value = list.some((a) => a.id === row.id) ? replaceById(list, row) : [row, ...list]
+  applications.value = list.some((a) => a.id === row.id)
+    ? replaceById(list, row)
+    : [row, ...list]
 }
 
-const { loading: formLoading, submit: submitFormAction } = useModalForm<ApplicationRow>((row) => {
-  closeForm()
-  upsertApplication(row)
-})
+const { loading: formLoading, submit: submitFormAction } = useModalForm<ApplicationRow>(
+  (row) => {
+    closeForm()
+    upsertApplication(row)
+  },
+)
 
 function validateForm(): boolean {
-  formRegistrationNumberError.value = isValidRegistrationNumber(formRegistrationNumber.value)
+  formRegistrationNumberError.value = isValidRegistrationNumber(
+    formRegistrationNumber.value,
+  )
     ? ''
-    : 'Nieprawidłowy numer rejestracyjny (np. WA12345)'
+    : 'Nieprawidłowy numer rejestracyjny'
   return !formRegistrationNumberError.value
 }
 
@@ -167,7 +173,10 @@ function submitForm() {
             <StatusBadge :status="a.status" />
           </div>
 
-          <div v-if="a.status === 'NEEDS_CHANGES' && a.manager_comment" class="review-comment">
+          <div
+            v-if="a.status === 'NEEDS_CHANGES' && a.manager_comment"
+            class="review-comment"
+          >
             <p class="review-comment-title">Komentarz zarządcy</p>
             <p class="review-comment-text">{{ a.manager_comment }}</p>
           </div>

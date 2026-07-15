@@ -13,7 +13,7 @@ const result = ref<BarrierCheckResult | null>(null)
 
 async function submit() {
   if (!isValidRegistrationNumber(plate.value)) {
-    plateError.value = 'Nieprawidłowy numer rejestracyjny (np. WA12345)'
+    plateError.value = 'Nieprawidłowy numer rejestracyjny'
     result.value = null
     return
   }

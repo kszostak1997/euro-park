@@ -60,7 +60,10 @@ function select(option: SelectOption) {
 
 function onTriggerKeydown(event: KeyboardEvent) {
   if (props.disabled) return
-  if (!isOpen.value && (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ')) {
+  if (
+    !isOpen.value &&
+    (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ')
+  ) {
     event.preventDefault()
     open()
     return
@@ -113,7 +116,9 @@ onUnmounted(() => {
         :disabled="disabled"
         :aria-expanded="isOpen"
         :aria-required="required"
-        :aria-activedescendant="isOpen && activeIndex >= 0 ? `${id}-option-${activeIndex}` : undefined"
+        :aria-activedescendant="
+          isOpen && activeIndex >= 0 ? `${id}-option-${activeIndex}` : undefined
+        "
         aria-haspopup="listbox"
         @click="toggle"
         @keydown="onTriggerKeydown"

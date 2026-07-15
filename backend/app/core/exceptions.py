@@ -14,12 +14,12 @@ class AppError(Exception):
 
 class EmailAlreadyRegisteredError(AppError):
     status_code = 409
-    detail = "Email already registered"
+    detail = "Ten adres email jest już zarejestrowany"
 
 
 class InvalidCredentialsError(AppError):
     status_code = 401
-    detail = "Invalid email or password"
+    detail = "Nieprawidłowy email lub hasło"
 
 
 class InvalidTokenError(AppError):

@@ -3,8 +3,15 @@ import type { ApplicationStatus } from '~/types/application'
 
 defineProps<{ status: ApplicationStatus }>()
 
-const STATUS_META: Record<ApplicationStatus, { label: string; bg: string; fg: string }> = {
-  PENDING: { label: 'Oczekuje', bg: 'var(--color-neutral-bg)', fg: 'var(--color-neutral-fg)' },
+const STATUS_META: Record<
+  ApplicationStatus,
+  { label: string; bg: string; fg: string }
+> = {
+  PENDING: {
+    label: 'Oczekuje',
+    bg: 'var(--color-neutral-bg)',
+    fg: 'var(--color-neutral-fg)',
+  },
   NEEDS_CHANGES: {
     label: 'Do poprawy',
     bg: 'var(--color-warning-bg)',

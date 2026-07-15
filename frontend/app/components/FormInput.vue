@@ -25,7 +25,10 @@ const inputType = computed(() => {
 <template>
   <div class="field" :class="{ 'field--error': !!error }">
     <label :for="id">{{ label }}</label>
-    <div class="field-input-wrap" :class="{ 'field-input-wrap--toggle': isPasswordField }">
+    <div
+      class="field-input-wrap"
+      :class="{ 'field-input-wrap--toggle': isPasswordField }"
+    >
       <input
         :id="id"
         v-model="model"
@@ -39,7 +42,7 @@ const inputType = computed(() => {
         :maxlength="maxlength"
         :aria-invalid="!!error"
         :aria-describedby="error ? `${id}-error` : undefined"
-      >
+      />
       <button
         v-if="isPasswordField"
         type="button"

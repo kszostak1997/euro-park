@@ -40,7 +40,9 @@ const { data: applicationsPage, pending } = useAsyncData<ApplicationPage>(
   { watch: [statusFilter, page] },
 )
 
-const applications = computed<ApplicationRow[]>(() => applicationsPage.value?.items ?? [])
+const applications = computed<ApplicationRow[]>(
+  () => applicationsPage.value?.items ?? [],
+)
 
 const applicationsWord = computed(() =>
   pluralizePl(applicationsPage.value?.total ?? 0, ['wniosek', 'wnioski', 'wniosków']),
@@ -78,7 +80,9 @@ function applyMutatedApplication(row: ApplicationRow) {
   }
 }
 
-const { isLoading, run: runOnApp } = useKeyedAction<ApplicationRow>(applyMutatedApplication)
+const { isLoading, run: runOnApp } = useKeyedAction<ApplicationRow>(
+  applyMutatedApplication,
+)
 
 function runAction(app: ApplicationRow, fn: () => Promise<ApplicationRow>) {
   return runOnApp(app.id, fn)
@@ -88,7 +92,12 @@ type ConfirmKind = 'approve' | 'reject' | 'revoke'
 
 const CONFIRM_COPY: Record<
   ConfirmKind,
-  { title: string; question: (nr: string) => string; buttonLabel: string; variant: 'primary' | 'destructive' | 'outline' }
+  {
+    title: string
+    question: (nr: string) => string
+    buttonLabel: string
+    variant: 'primary' | 'destructive' | 'outline'
+  }
 > = {
   approve: {
     title: 'Zatwierdź wniosek',
@@ -104,7 +113,8 @@ const CONFIRM_COPY: Record<
   },
   revoke: {
     title: 'Cofnij zatwierdzenie',
-    question: (nr) => `Cofnąć zatwierdzenie wniosku ${nr}? Wniosek wróci do statusu oczekującego.`,
+    question: (nr) =>
+      `Cofnąć zatwierdzenie wniosku ${nr}? Wniosek wróci do statusu oczekującego.`,
     buttonLabel: 'Cofnij',
     variant: 'outline',
   },
@@ -116,7 +126,9 @@ const {
   close: closeConfirm,
 } = useDisclosure<{ app: ApplicationRow; kind: ConfirmKind }>()
 
-const confirmCopy = computed(() => (confirmTarget.value ? CONFIRM_COPY[confirmTarget.value.kind] : null))
+const confirmCopy = computed(() =>
+  confirmTarget.value ? CONFIRM_COPY[confirmTarget.value.kind] : null,
+)
 
 function openConfirm(app: ApplicationRow, kind: ConfirmKind) {
   openConfirmRaw({ app, kind })
@@ -126,7 +138,11 @@ async function submitConfirm() {
   if (!confirmTarget.value) return
   const { app, kind } = confirmTarget.value
   const action =
-    kind === 'approve' ? approveApplication : kind === 'reject' ? rejectApplication : revokeApplication
+    kind === 'approve'
+      ? approveApplication
+      : kind === 'reject'
+        ? rejectApplication
+        : revokeApplication
   await runAction(app, () => action(app.id))
   closeConfirm()
 }
@@ -182,7 +198,9 @@ async function submitRequestChanges() {
       :title="confirmCopy.title"
       @close="closeConfirm"
     >
-      <p class="modal-subtitle">{{ confirmCopy.question(confirmTarget.app.registration_number) }}</p>
+      <p class="modal-subtitle">
+        {{ confirmCopy.question(confirmTarget.app.registration_number) }}
+      </p>
       <div class="form-actions">
         <LoadingButton
           :variant="confirmCopy.variant"
@@ -201,7 +219,11 @@ async function submitRequestChanges() {
       </div>
     </AppModal>
 
-    <AppModal v-if="requestChangesTarget" title="Poproś o poprawki" @close="closeRequestChanges">
+    <AppModal
+      v-if="requestChangesTarget"
+      title="Poproś o poprawki"
+      @close="closeRequestChanges"
+    >
       <p class="modal-subtitle">{{ requestChangesTarget.registration_number }}</p>
       <FormInput
         id="requestChangesComment"
@@ -246,9 +268,17 @@ async function submitRequestChanges() {
               <td><span class="sk" style="width: 140px; height: 12px" /></td>
               <td><span class="sk" style="width: 20px; height: 12px" /></td>
               <td><span class="sk" style="width: 90px; height: 12px" /></td>
-              <td><span class="sk" style="width: 70px; height: 21px; border-radius: 6px" /></td>
+              <td>
+                <span
+                  class="sk"
+                  style="width: 70px; height: 21px; border-radius: 6px"
+                />
+              </td>
               <td class="actions-col">
-                <span class="sk" style="width: 90px; height: 21px; border-radius: 6px" />
+                <span
+                  class="sk"
+                  style="width: 90px; height: 21px; border-radius: 6px"
+                />
               </td>
             </tr>
           </template>

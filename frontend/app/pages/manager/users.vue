@@ -31,7 +31,11 @@ const ROLE_OPTIONS: SelectOption[] = [
   { value: 'ADMIN', label: 'ADMIN' },
 ]
 
-const { target: showUserForm, open: openCreateUserRaw, close: closeCreateUser } = useDisclosure()
+const {
+  target: showUserForm,
+  open: openCreateUserRaw,
+  close: closeCreateUser,
+} = useDisclosure()
 const newUserEmail = ref('')
 const newUserPassword = ref('')
 const newUserRole = ref('USER')
@@ -43,10 +47,12 @@ function openCreateUser() {
   openCreateUserRaw()
 }
 
-const { loading: userFormLoading, submit: submitCreateUserAction } = useModalForm(async () => {
-  closeCreateUser()
-  await refreshUsers()
-})
+const { loading: userFormLoading, submit: submitCreateUserAction } = useModalForm(
+  async () => {
+    closeCreateUser()
+    await refreshUsers()
+  },
+)
 
 function submitCreateUser() {
   return submitCreateUserAction(
@@ -63,7 +69,11 @@ function submitCreateUser() {
   )
 }
 
-const { target: editUserTarget, open: openEditUserRaw, close: closeEditUser } = useDisclosure<AuthUser>()
+const {
+  target: editUserTarget,
+  open: openEditUserRaw,
+  close: closeEditUser,
+} = useDisclosure<AuthUser>()
 const editUserRole = ref('USER')
 
 function openEditUser(target: AuthUser) {
@@ -71,10 +81,12 @@ function openEditUser(target: AuthUser) {
   openEditUserRaw(target)
 }
 
-const { loading: editUserLoading, submit: submitEditUserAction } = useModalForm(async () => {
-  closeEditUser()
-  await refreshUsers()
-})
+const { loading: editUserLoading, submit: submitEditUserAction } = useModalForm(
+  async () => {
+    closeEditUser()
+    await refreshUsers()
+  },
+)
 
 function submitEditUser() {
   if (!editUserTarget.value) return
@@ -92,10 +104,12 @@ const {
   close: closeDeleteUser,
 } = useDisclosure<AuthUser>()
 
-const { loading: deleteUserLoading, submit: confirmDeleteUserAction } = useModalForm(async () => {
-  closeDeleteUser()
-  await refreshUsers()
-})
+const { loading: deleteUserLoading, submit: confirmDeleteUserAction } = useModalForm(
+  async () => {
+    closeDeleteUser()
+    await refreshUsers()
+  },
+)
 
 function confirmDeleteUser() {
   if (!deleteConfirmTarget.value) return
@@ -115,7 +129,9 @@ function confirmDeleteUser() {
           <template v-else>{{ usersPage?.total ?? 0 }} użytkowników</template>
         </p>
       </div>
-      <LoadingButton v-if="isAdmin" @click="openCreateUser">Dodaj użytkownika</LoadingButton>
+      <LoadingButton v-if="isAdmin" @click="openCreateUser"
+        >Dodaj użytkownika</LoadingButton
+      >
     </div>
 
     <AppModal v-if="showUserForm" title="Nowy użytkownik" @close="closeCreateUser">
@@ -133,12 +149,21 @@ function confirmDeleteUser() {
         type="password"
         placeholder="Min. 4 znaki"
       />
-      <FormSelect id="newUserRole" v-model="newUserRole" label="Rola" :options="ROLE_OPTIONS" />
+      <FormSelect
+        id="newUserRole"
+        v-model="newUserRole"
+        label="Rola"
+        :options="ROLE_OPTIONS"
+      />
       <div class="form-actions">
         <LoadingButton :loading="userFormLoading" @click="submitCreateUser">
           Utwórz
         </LoadingButton>
-        <LoadingButton variant="outline" :disabled="userFormLoading" @click="closeCreateUser">
+        <LoadingButton
+          variant="outline"
+          :disabled="userFormLoading"
+          @click="closeCreateUser"
+        >
           Anuluj
         </LoadingButton>
       </div>
@@ -146,16 +171,31 @@ function confirmDeleteUser() {
 
     <AppModal v-if="editUserTarget" title="Edytuj użytkownika" @close="closeEditUser">
       <p class="modal-subtitle">{{ editUserTarget.email }}</p>
-      <FormSelect id="editUserRole" v-model="editUserRole" label="Rola" :options="ROLE_OPTIONS" />
+      <FormSelect
+        id="editUserRole"
+        v-model="editUserRole"
+        label="Rola"
+        :options="ROLE_OPTIONS"
+      />
       <div class="form-actions">
-        <LoadingButton :loading="editUserLoading" @click="submitEditUser">Zapisz</LoadingButton>
-        <LoadingButton variant="outline" :disabled="editUserLoading" @click="closeEditUser">
+        <LoadingButton :loading="editUserLoading" @click="submitEditUser"
+          >Zapisz</LoadingButton
+        >
+        <LoadingButton
+          variant="outline"
+          :disabled="editUserLoading"
+          @click="closeEditUser"
+        >
           Anuluj
         </LoadingButton>
       </div>
     </AppModal>
 
-    <AppModal v-if="deleteConfirmTarget" title="Usuń użytkownika" @close="closeDeleteUser">
+    <AppModal
+      v-if="deleteConfirmTarget"
+      title="Usuń użytkownika"
+      @close="closeDeleteUser"
+    >
       <p class="modal-subtitle">Na pewno usunąć {{ deleteConfirmTarget.email }}?</p>
       <div class="form-actions">
         <LoadingButton
@@ -165,7 +205,11 @@ function confirmDeleteUser() {
         >
           Usuń
         </LoadingButton>
-        <LoadingButton variant="outline" :disabled="deleteUserLoading" @click="closeDeleteUser">
+        <LoadingButton
+          variant="outline"
+          :disabled="deleteUserLoading"
+          @click="closeDeleteUser"
+        >
           Anuluj
         </LoadingButton>
       </div>
@@ -188,7 +232,10 @@ function confirmDeleteUser() {
               <td><span class="sk" style="width: 160px; height: 12px" /></td>
               <td><span class="sk" style="width: 70px; height: 12px" /></td>
               <td v-if="isAdmin" class="actions-col">
-                <span class="sk" style="width: 60px; height: 21px; border-radius: 6px" />
+                <span
+                  class="sk"
+                  style="width: 60px; height: 21px; border-radius: 6px"
+                />
               </td>
             </tr>
           </template>
@@ -257,4 +304,3 @@ function confirmDeleteUser() {
     </div>
   </section>
 </template>
-
